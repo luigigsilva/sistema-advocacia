@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - Escritório de Advocacia</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="page-cadastro">
+<div class="main-container">
+    <div class="card-register">
+        <div class="header-card">
+            <h1>JUS & ASSOCIADOS</h1>
+            <p>Crie sua conta para acompanhar e gerenciar seus processos</p>
+        </div>
+
+
+        <form id="registerForm" action="/cadastrar" method="POST" class="form-register">
+            <div class="form-group">
+                <label for="nome">Nome completo *</label>
+                <input
+                        type="text"
+                        id="nome"
+                        name="nome"
+                        placeholder="Ex: Roberto Silva"
+                        required
+                        autocomplete="name"
+                >
+            </div>
+
+
+            <div class="form-group">
+                <label for="email">E-mail *</label>
+                <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="seu.email@exemplo.com"
+                        required
+                        autocomplete="email"
+                >
+            </div>
+
+
+            <div class="form-group">
+                <label for="senha">Senha *</label>
+                <input
+                        type="password"
+                        id="senha"
+                        name="senha"
+                        placeholder="••••••••"
+                        required
+                        minlength="6"
+                >
+            </div>
+
+
+            <button type="submit" class="btn-submit">Criar Conta</button>
+        </form>
+
+
+        <div class="footer-card">
+            <p>Já possui uma conta? <a href="login.html">Faça login</a></p>
+        </div>
+    </div>
+</div>
+</body>
+</html>
