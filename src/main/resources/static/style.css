@@ -1,6 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600&display=swap');
 
-
 body {
     background-color: #e2e4e8;
     font-family: 'Work Sans', sans-serif;
@@ -11,7 +10,6 @@ body {
     align-items: center;
     min-height: 100vh;
 }
-
 
 .card-container {
     background-color: #ffffff;
@@ -24,7 +22,6 @@ body {
     text-align: center;
 }
 
-
 h2 {
     color: #c5a059;
     font-weight: 500;
@@ -33,12 +30,10 @@ h2 {
     letter-spacing: 0.5px;
 }
 
-
 .input-group {
     margin-bottom: 18px;
     text-align: left;
 }
-
 
 .input-group label {
     display: block;
@@ -47,7 +42,6 @@ h2 {
     margin-bottom: 6px;
     font-weight: 500;
 }
-
 
 .input-group input {
     width: 100%;
@@ -60,12 +54,10 @@ h2 {
     transition: border-color 0.3s;
 }
 
-
 .input-group input:focus {
     outline: none;
     border-color: #c5a059;
 }
-
 
 .btn-entrar {
     width: 100%;
@@ -82,17 +74,14 @@ h2 {
     transition: background-color 0.3s;
 }
 
-
 .btn-entrar:hover {
     background-color: #1a1a1a;
 }
-
 
 p {
     margin-top: 20px;
     font-size: 13px;
 }
-
 
 p a {
     color: #777777;
@@ -100,11 +89,27 @@ p a {
     transition: color 0.3s;
 }
 
-
 p a:hover {
     color: #c5a059;
 }
 
+/* --- ESQUECEU SUA SENHA ALINHADO À ESQUERDA --- */
+
+.esqueceu-senha {
+    text-align: left;
+    margin-top: 6px;
+}
+
+.esqueceu-senha a {
+    font-size: 12px;
+    color: #777777;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.esqueceu-senha a:hover {
+    color: #c5a059;
+}
 
 /* ↓↓↓ CSS DO DO CADASTRO  ↓↓↓ */
 /* ↓↓↓ CSS DO DO CADASTRO  ↓↓↓ */
@@ -112,10 +117,6 @@ p a:hover {
 /* ↓↓↓ CSS DO DO CADASTRO  ↓↓↓ */
 /* ↓↓↓ CSS DO DO CADASTRO  ↓↓↓ */
 /* ↓↓↓ CSS DO DO CADASTRO  ↓↓↓ */
-
-
-
-
 
 
 
@@ -126,7 +127,6 @@ p a:hover {
     padding: 0;
     box-sizing: border-box;
 }
-
 
 body.page-cadastro {
     font-family: 'Work Sans', sans-serif;
@@ -139,12 +139,10 @@ body.page-cadastro {
     padding: 20px;
 }
 
-
 .page-cadastro .main-container {
     width: 100%;
     max-width: 440px;
 }
-
 
 .page-cadastro .card-register {
     background-color: #ffffff;
@@ -155,12 +153,10 @@ body.page-cadastro {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
-
 .page-cadastro .header-card {
     text-align: center;
     margin-bottom: 32px;
 }
-
 
 .page-cadastro .header-card h1 {
     font-family: 'Merriweather', serif;
@@ -171,13 +167,11 @@ body.page-cadastro {
     text-transform: uppercase;
 }
 
-
 .page-cadastro .header-card p {
     font-size: 0.875rem;
     color: #666666;
     line-height: 1.4;
 }
-
 
 .page-cadastro .form-register {
     display: flex;
@@ -185,20 +179,17 @@ body.page-cadastro {
     gap: 20px;
 }
 
-
 .page-cadastro .form-group {
     display: flex;
     flex-direction: column;
     gap: 6px;
 }
 
-
 .page-cadastro .form-group label {
     font-size: 0.85rem;
     font-weight: 500;
     color: #4a4a4a;
 }
-
 
 .page-cadastro .form-group input {
     width: 100%;
@@ -212,17 +203,14 @@ body.page-cadastro {
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-
 .page-cadastro .form-group input::placeholder {
     color: #888888;
 }
-
 
 .page-cadastro .form-group input:focus {
     border-color: #c3a066;
     box-shadow: 0 0 0 3px rgba(195, 160, 102, 0.2);
 }
-
 
 .page-cadastro .btn-submit {
     margin-top: 10px;
@@ -237,16 +225,13 @@ body.page-cadastro {
     transition: background-color 0.2s, transform 0.1s;
 }
 
-
 .page-cadastro .btn-submit:hover {
     background-color: #1a1a1a;
 }
 
-
 .page-cadastro .btn-submit:active {
     transform: scale(0.99);
 }
-
 
 .page-cadastro .footer-card {
     margin-top: 24px;
@@ -255,13 +240,11 @@ body.page-cadastro {
     color: #666666;
 }
 
-
 .page-cadastro .footer-card a {
     color: #2b2c2c;
     text-decoration: none;
     font-weight: 500;
 }
-
 
 .page-cadastro .footer-card a:hover {
     text-decoration: underline;
