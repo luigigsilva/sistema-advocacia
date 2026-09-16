@@ -24,7 +24,8 @@ public class SegurancaConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/cadastro.html", "/login.html", "/style.css", "/cadastrar").permitAll()
+                        // QUE DESGRAÇA, CADA PÁGINA NOVA TEM QUE SER ADICIONADA AQUI, SE N O SERVER EXPLODE:
+                        .requestMatchers("/cadastro.html", "/login.html", "/recuperar-senha.html", "/cadastrar", "/style.css").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -41,7 +42,6 @@ public class SegurancaConfig {
                         .logoutSuccessUrl("/login.html?logout=true")
                         .permitAll()
                 );
-
 
         return http.build();
     }

@@ -1,10 +1,11 @@
 package org.example.advocacia.controller;
 
+import jakarta.validation.Valid;
 import org.example.advocacia.model.Usuario;
-import org.example.advocacia.servico.UsuarioServico;
 import org.example.advocacia.servico.UsuarioServico;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 
@@ -13,15 +14,20 @@ import org.springframework.web.bind.annotation.PostMapping;
 @Controller
 public class AuthController {
 
-
     @Autowired
     private UsuarioServico usuarioService;
 
-
     @PostMapping("/cadastrar")
-    public String processarCadastro(@ModelAttribute Usuario usuario) {
+    public String processarCadastro(@Valid @ModelAttribute Usuario usuario, BindingResult result) {
+        // Impede cadastro com dados inválidos
+        if (result.hasErrors()) {
+            return "redirect:/cadastro.html?erro=dados_invalidos";
+        }
+
         try {
+            // Verifica e-mail já cadastrado e armazena os dados
             usuarioService.cadastrarUsuario(usuario);
+            // Redireciona para exibir mensagem de sucesso no login
             return "redirect:/login.html?sucesso=true";
         } catch (IllegalArgumentException e) {
             return "redirect:/cadastro.html?erro=email_duplicado";
