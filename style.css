@@ -93,6 +93,24 @@ p a:hover {
     color: #c5a059;
 }
 
+/* --- ESQUECEU SUA SENHA ALINHADO À ESQUERDA --- */
+
+.esqueceu-senha {
+    text-align: left;
+    margin-top: 6px;
+}
+
+.esqueceu-senha a {
+    font-size: 12px;
+    color: #777777;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.esqueceu-senha a:hover {
+    color: #c5a059;
+}
+
 /* ↓↓↓ CSS DO DO CADASTRO  ↓↓↓ */
 /* ↓↓↓ CSS DO DO CADASTRO  ↓↓↓ */
 /* ↓↓↓ CSS DO DO CADASTRO  ↓↓↓ */
