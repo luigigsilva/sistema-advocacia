@@ -2,7 +2,6 @@ package org.example.advocacia.controller;
 
 import org.example.advocacia.model.Usuario;
 import org.example.advocacia.servico.UsuarioServico;
-import org.example.advocacia.servico.UsuarioServico;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -16,7 +15,6 @@ public class AuthController {
     private UsuarioServico usuarioService;
 
     @PostMapping("/cadastrar")
-    public String processarCadastro(@ModelAttribute Usuario usuario) {
         try {
             usuarioService.cadastrarUsuario(usuario);
             return "redirect:/login.html?sucesso=true";

@@ -21,7 +21,6 @@ public class SegurancaConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/cadastro.html", "/login.html", "/style.css", "/cadastrar").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

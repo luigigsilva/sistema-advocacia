@@ -1,10 +1,6 @@
 package org.example.advocacia.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 // A classe (Usuario.java) vai criar a tabela no banco de dados.
 @Entity
