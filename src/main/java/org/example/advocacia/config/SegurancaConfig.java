@@ -24,7 +24,7 @@ public class SegurancaConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // QUE DESGRAÇA, CADA PÁGINA NOVA TEM QUE SER ADICIONADA AQUI, SE N O SERVER EXPLODE:
+                        // CADA PÁGINA NOVA TEM QUE SER ADICIONADA AQUI, SE N O SERVER EXPLODE:
                         .requestMatchers("/cadastro.html", "/login.html", "/recuperar-senha.html", "/cadastrar", "/style.css").permitAll()
                         .anyRequest().authenticated()
                 )
