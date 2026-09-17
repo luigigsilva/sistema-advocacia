@@ -7,34 +7,29 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
-
-// Isso é a segurança, vai criptografar, gerenciar a sessão e o logout e definir permissões de rotas.
 @Configuration
 public class SegurancaConfig {
-
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // CADA PÁGINA NOVA TEM QUE SER ADICIONADA AQUI, SE N O SERVER EXPLODE:
                         .requestMatchers("/cadastro.html", "/login.html", "/recuperar-senha.html", "/cadastrar", "/style.css").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login.html")
                         .loginProcessingUrl("/login")
-                        .usernameParameter("email")
-                        .passwordParameter("senha")
+                        .usernameParameter("username")
+                        .passwordParameter("password")
                         .defaultSuccessUrl("/index.html", true)
-                        .failureUrl("/login.html?erro=true")
+                        .failureUrl("/login.html?error=true")
                         .permitAll()
                 )
                 .logout(logout -> logout
@@ -46,4 +41,3 @@ public class SegurancaConfig {
         return http.build();
     }
 }
-

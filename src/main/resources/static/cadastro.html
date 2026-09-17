@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -17,6 +15,11 @@
             <div class="header-card">
                 <h1>JUS & ASSOCIADOS</h1>
                 <p>Crie sua conta para acompanhar e gerenciar seus processos</p>
+            </div>
+
+            <!-- Caixa de Alerta Vermelha (mesmo estilo do login) -->
+            <div id="msg-erro" style="display: none; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; font-size: 12px; margin-bottom: 15px;">
+                <span id="texto-erro">Erro no cadastro.</span>
             </div>
 
             <form id="registerForm" action="/cadastrar" method="POST" class="form-register">
@@ -38,7 +41,7 @@
                         type="email" 
                         id="email" 
                         name="email" 
-                        placeholder="seu.email@exemplo.com" 
+                        placeholder="seuemail@exemplo.com" 
                         required 
                         autocomplete="email"
                     >
@@ -52,7 +55,17 @@
                         name="senha" 
                         placeholder="••••••••" 
                         required 
-                        minlength="6"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmarSenha">Confirmar Senha *</label>
+                    <input 
+                        type="password" 
+                        id="confirmarSenha" 
+                        name="confirmarSenha" 
+                        placeholder="••••••••" 
+                        required 
                     >
                 </div>
 
@@ -66,15 +79,58 @@
     </div>
 
     <script>
+        // Leitura de erros vindos do Backend via URL
         const urlParams = new URLSearchParams(window.location.search);
+        const msgErroDiv = document.getElementById('msg-erro');
+        const textoErroSpan = document.getElementById('texto-erro');
+
         if (urlParams.get('erro') === 'email_duplicado') {
-            alert('Este e-mail já está em uso por outro usuário.');
+            textoErroSpan.textContent = 'Este e-mail já está em uso por outro usuário.';
+            msgErroDiv.style.display = 'block';
         } else if (urlParams.get('erro') === 'dados_invalidos') {
-            alert('Dados inválidos. Verifique as informações fornecidas.');
+            textoErroSpan.textContent = 'Dados inválidos. Verifique as informações fornecidas.';
+            msgErroDiv.style.display = 'block';
         }
+
+        // Validação Frontend ao clicar em "Criar Conta"
+        document.getElementById('registerForm').addEventListener('submit', function(event) {
+            const emailInput = document.getElementById('email').value.trim();
+            const senhaInput = document.getElementById('senha').value;
+            const confirmarSenhaInput = document.getElementById('confirmarSenha').value;
+
+            // Expressão regular para e-mail estrito (sem caracteres especiais após o @ e obriga .com ou domínio válido)
+            const regexEmailStrict = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            const posAt = emailInput.indexOf('@');
+            const dominio = posAt !== -1 ? emailInput.substring(posAt + 1) : '';
+            const regexDominioInvalido = /[^a-zA-Z0-9.-]/;
+
+            // Expressão regular para senha: mínimo 8 caracteres, pelo menos 1 letra, 1 número e 1 caractere especial
+            const regexSenhaForte = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&._\-#])[A-Za-z\d@$!%*?&._\-#]{8,}$/;
+
+            let mensagem = '';
+
+            // Validações de E-mail
+            if (!regexEmailStrict.test(emailInput) || regexDominioInvalido.test(dominio) || !emailInput.endsWith('.com')) {
+                mensagem = 'Informe um e-mail válido terminando em .com e sem caracteres especiais após o @.';
+            } 
+            // Validações de Senha
+            else if (!regexSenhaForte.test(senhaInput)) {
+                mensagem = 'A senha deve ter no mínimo 8 caracteres, contendo letras, números e ao menos um caractere especial (@$!%*?&._-#).';
+            } 
+            // Confirmação de Senha
+            else if (senhaInput !== confirmarSenhaInput) {
+                mensagem = 'As senhas digitadas não são iguais.';
+            }
+
+            // Se houver erro, impede o envio e exibe a mensagem na caixa vermelha
+            if (mensagem !== '') {
+                event.preventDefault();
+                textoErroSpan.textContent = mensagem;
+                msgErroDiv.style.display = 'block';
+            } else {
+                msgErroDiv.style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>
-
-
-

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Concluído</title>
+    
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+        }
+
+        .card {
+            background-color: #1e1e1e;
+            border: 1px solid #c5a059;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 350px;
+        }
+
+        /* IMAGEM NO MEIO */
+        .imagem {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin: 15px auto;
+            display: block;
+        }
+
+        h1 {
+            color: #c5a059;
+            margin: 0;
+            font-size: 22px;
+        }
+
+        /* ANIMAÇÃO DA COBRINHA RODANDO */
+        .cobrinha {
+            display: inline-block;
+            font-size: 30px;
+            margin-top: 15px;
+            animation: girar 2s linear infinite;
+        }
+
+        @keyframes girar {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>Parabéns você fez login!!!</h1>
+
+        <!-- COLOQUE O NOME DA SUA IMAGEM NO SRC ABAIXO -->
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDAnQB7g72ia9paJbCM7XwWKs8fg3mxwVnlc8PtS3Vvw&s=10" alt="Imagem" class="imagem">
+
+        <!-- COBRINHA RODANDO NO FINAL -->
+        <div class="cobrinha">🐍</div>
+    </div>
+
+</body>
+</html>
