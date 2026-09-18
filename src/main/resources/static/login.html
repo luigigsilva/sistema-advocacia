@@ -54,7 +54,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const msgErro = document.getElementById('msg-erro');
 
-        // Garante que a mensagem comece escondida
+        // Garante que a mensagem comece SEMPRE escondida
         if (msgErro) {
             msgErro.style.display = 'none';
         }
@@ -64,14 +64,14 @@
             alert('Cadastro realizado com sucesso! Faça seu login.');
         }
 
-        // Só exibe o erro se o parâmetro "error" existir E NÃO estiver vazio ou for "true"
+        // Só exibe o erro se o parâmetro 'error' tiver um valor explícito de falha
         const errorParam = urlParams.get('error');
-        if (errorParam !== null && (errorParam === '' || errorParam === 'true')) {
+        if (errorParam === 'true' || errorParam === '1') {
             if (msgErro) msgErro.style.display = 'block';
         }
     });
 
-    // Validação visual ao enviar o formulário
+    // Validação de formato do e-mail no envio
     document.getElementById('form-login').addEventListener('submit', function(event) {
         var emailInput = document.getElementById('email').value;
         var msgErro = document.getElementById('msg-erro');
@@ -79,7 +79,7 @@
         var regexEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
         if (!regexEmail.test(emailInput)) {
-            event.preventDefault(); // Bloqueia o envio se o e-mail for mal formatado
+            event.preventDefault(); // Bloqueia o envio se o e-mail for inválido
             if (msgErro) msgErro.style.display = 'block';
         }
     });
