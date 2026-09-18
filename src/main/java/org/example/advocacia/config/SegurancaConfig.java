@@ -33,6 +33,12 @@ public class SegurancaConfig {
                         .failureUrl("/login.html?error=true")
                         .permitAll()
                 )
+                .exceptionHandling(exception -> exception
+                        // Redireciona acessos negados/sessão expirada SEM mandar a chave ?error na URL
+                        .authenticationEntryPoint((request, response, authException) -> 
+                            response.sendRedirect("/login.html")
+                        )
+                )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login.html?logout=true")
