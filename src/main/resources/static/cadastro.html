@@ -13,58 +13,62 @@
     <div class="main-container">
         <div class="card-register">
             <div class="header-card">
-                <h1>JUS & ASSOCIADOS</h1>
+                <h1>JuriSync</h1>
                 <p>Crie sua conta para acompanhar e gerenciar seus processos</p>
             </div>
 
-            <!-- Caixa de Alerta Vermelha (mesmo estilo do login) -->
+            <!-- Caixa de Alerta Vermelha -->
             <div id="msg-erro" style="display: none; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; font-size: 12px; margin-bottom: 15px;">
                 <span id="texto-erro">Erro no cadastro.</span>
             </div>
 
             <form id="registerForm" action="/cadastrar" method="POST" class="form-register">
                 <div class="form-group">
-                    <label for="nome">Nome completo *</label>
+                    <label for="nome">Nome completo</label>
                     <input 
                         type="text" 
                         id="nome" 
                         name="nome" 
-                        placeholder="Ex: Roberto Silva" 
                         required 
                         autocomplete="name"
                     >
                 </div>
 
                 <div class="form-group">
-                    <label for="email">E-mail *</label>
+                    <label for="email">E-mail</label>
                     <input 
                         type="email" 
                         id="email" 
                         name="email" 
-                        placeholder="seuemail@exemplo.com" 
                         required 
                         autocomplete="email"
                     >
                 </div>
 
                 <div class="form-group">
-                    <label for="senha">Senha *</label>
+                    <label for="senha">Senha</label>
                     <input 
                         type="password" 
                         id="senha" 
                         name="senha" 
-                        placeholder="••••••••" 
                         required 
                     >
+                    
+                    <!-- Barra de Força alinhada à esquerda (40% de largura) -->
+                    <div id="meter-container" style="display: none; margin-top: 8px;">
+                        <div style="width: 40%; height: 5px; background-color: #333333; border-radius: 3px; overflow: hidden; margin-left: 0;">
+                            <div id="meter-fill" style="height: 100%; width: 0%; transition: width 0.3s ease, background-color 0.3s ease; border-radius: 3px;"></div>
+                        </div>
+                        <span id="meter-text" style="display: block; margin-top: 5px; font-size: 12px; font-weight: 500; text-align: left;"></span>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="confirmarSenha">Confirmar Senha *</label>
+                    <label for="confirmarSenha">Confirmar Senha</label>
                     <input 
                         type="password" 
                         id="confirmarSenha" 
                         name="confirmarSenha" 
-                        placeholder="••••••••" 
                         required 
                     >
                 </div>
@@ -85,52 +89,111 @@
         const textoErroSpan = document.getElementById('texto-erro');
 
         if (urlParams.get('erro') === 'email_duplicado') {
-            textoErroSpan.textContent = 'Este e-mail já está em uso por outro usuário.';
-            msgErroDiv.style.display = 'block';
+            if (textoErroSpan) textoErroSpan.textContent = 'Este e-mail já está em uso por outro usuário.';
+            if (msgErroDiv) msgErroDiv.style.display = 'block';
         } else if (urlParams.get('erro') === 'dados_invalidos') {
-            textoErroSpan.textContent = 'Dados inválidos. Verifique as informações fornecidas.';
-            msgErroDiv.style.display = 'block';
+            if (textoErroSpan) textoErroSpan.textContent = 'Dados inválidos. Verifique as informações fornecidas.';
+            if (msgErroDiv) msgErroDiv.style.display = 'block';
         }
 
-        // Validação Frontend ao clicar em "Criar Conta"
-        document.getElementById('registerForm').addEventListener('submit', function(event) {
-            const emailInput = document.getElementById('email').value.trim();
-            const senhaInput = document.getElementById('senha').value;
-            const confirmarSenhaInput = document.getElementById('confirmarSenha').value;
+        // Medidor de Força da Senha
+        const senhaInput = document.getElementById('senha');
+        const meterContainer = document.getElementById('meter-container');
+        const meterFill = document.getElementById('meter-fill');
+        const meterText = document.getElementById('meter-text');
 
-            // Expressão regular para e-mail estrito (sem caracteres especiais após o @ e obriga .com ou domínio válido)
-            const regexEmailStrict = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-            const posAt = emailInput.indexOf('@');
-            const dominio = posAt !== -1 ? emailInput.substring(posAt + 1) : '';
-            const regexDominioInvalido = /[^a-zA-Z0-9.-]/;
+        if (senhaInput) {
+            senhaInput.addEventListener('input', function() {
+                const val = senhaInput.value;
 
-            // Expressão regular para senha: mínimo 8 caracteres, pelo menos 1 letra, 1 número e 1 caractere especial
-            const regexSenhaForte = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&._\-#])[A-Za-z\d@$!%*?&._\-#]{8,}$/;
+                if (val.length === 0) {
+                    if (meterContainer) meterContainer.style.display = 'none';
+                    return;
+                }
 
-            let mensagem = '';
+                if (meterContainer) meterContainer.style.display = 'block';
 
-            // Validações de E-mail
-            if (!regexEmailStrict.test(emailInput) || regexDominioInvalido.test(dominio) || !emailInput.endsWith('.com')) {
-                mensagem = 'Informe um e-mail válido terminando em .com e sem caracteres especiais após o @.';
-            } 
-            // Validações de Senha
-            else if (!regexSenhaForte.test(senhaInput)) {
-                mensagem = 'A senha deve ter no mínimo 8 caracteres, contendo letras, números e ao menos um caractere especial (@$!%*?&._-#).';
-            } 
-            // Confirmação de Senha
-            else if (senhaInput !== confirmarSenhaInput) {
-                mensagem = 'As senhas digitadas não são iguais.';
-            }
+                const temLetra = /[a-zA-Z]/.test(val);
+                const temNumero = /[0-9]/.test(val);
+                const temEspecial = /[^a-zA-Z0-9]/.test(val);
 
-            // Se houver erro, impede o envio e exibe a mensagem na caixa vermelha
-            if (mensagem !== '') {
-                event.preventDefault();
-                textoErroSpan.textContent = mensagem;
-                msgErroDiv.style.display = 'block';
-            } else {
-                msgErroDiv.style.display = 'none';
-            }
-        });
+                if (!temEspecial) {
+                    if (meterFill) {
+                        meterFill.style.width = '33%';
+                        meterFill.style.backgroundColor = '#dc3545';
+                    }
+                    if (meterText) {
+                        meterText.textContent = 'Fraca (requer caractere especial !@#$%^&*)';
+                        meterText.style.color = '#dc3545';
+                    }
+                } 
+                else if (val.length < 6) {
+                    if (meterFill) {
+                        meterFill.style.width = '33%';
+                        meterFill.style.backgroundColor = '#dc3545';
+                    }
+                    if (meterText) {
+                        meterText.textContent = 'Fraca (mínimo 6 caracteres)';
+                        meterText.style.color = '#dc3545';
+                    }
+                } 
+                else if (val.length >= 8 && temEspecial && temLetra && temNumero) {
+                    if (meterFill) {
+                        meterFill.style.width = '100%';
+                        meterFill.style.backgroundColor = '#28a745';
+                    }
+                    if (meterText) {
+                        meterText.textContent = 'Forte';
+                        meterText.style.color = '#28a745';
+                    }
+                } 
+                else {
+                    if (meterFill) {
+                        meterFill.style.width = '66%';
+                        meterFill.style.backgroundColor = '#ffc107';
+                    }
+                    if (meterText) {
+                        meterText.textContent = 'Média';
+                        meterText.style.color = '#ffc107';
+                    }
+                }
+            });
+        }
+
+        // Validação no Envio do Formulário
+        const registerForm = document.getElementById('registerForm');
+        if (registerForm) {
+            registerForm.addEventListener('submit', function(event) {
+                const emailInput = document.getElementById('email').value.trim();
+                const senhaVal = senhaInput ? senhaInput.value : '';
+                const confirmarSenhaInput = document.getElementById('confirmarSenha').value;
+
+                const regexEmailStrict = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                const posAt = emailInput.indexOf('@');
+                const dominio = posAt !== -1 ? emailInput.substring(posAt + 1) : '';
+                const regexDominioInvalido = /[^a-zA-Z0-9.-]/;
+
+                let mensagem = '';
+
+                if (!regexEmailStrict.test(emailInput) || regexDominioInvalido.test(dominio) || !emailInput.endsWith('.com')) {
+                    mensagem = 'Informe um e-mail válido terminando em .com e sem caracteres especiais após o @.';
+                } 
+                else if (senhaVal.length < 6) {
+                    mensagem = 'A senha deve ter no mínimo 6 caracteres.';
+                } 
+                else if (senhaVal !== confirmarSenhaInput) {
+                    mensagem = 'As senhas digitadas não são iguais.';
+                }
+
+                if (mensagem !== '') {
+                    event.preventDefault();
+                    if (textoErroSpan) textoErroSpan.textContent = mensagem;
+                    if (msgErroDiv) msgErroDiv.style.display = 'block';
+                } else {
+                    if (msgErroDiv) msgErroDiv.style.display = 'none';
+                }
+            });
+        }
     </script>
 </body>
 </html>

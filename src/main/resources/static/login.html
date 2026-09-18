@@ -9,7 +9,7 @@
 <body>
 
 <div class="card-container">
-    <h2>Acesso ao Sistema</h2>
+    <h1>JURISYNC</h1>
 
     <!-- Mensagem de erro caso o login falhe ou o e-mail seja inválido -->
     <div id="msg-erro" style="display: none; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; font-size: 12px; margin-bottom: 15px;">
@@ -50,21 +50,28 @@
 
 <!-- Script de validação e captura de respostas do Spring Security -->
 <script>
-    // 1. Executa ao carregar a página
-    const urlParams = new URLSearchParams(window.location.search);
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const msgErro = document.getElementById('msg-erro');
 
-    // Exibe alerta de cadastro bem-sucedido
-    if (urlParams.has('sucesso')) {
-        alert('Cadastro realizado com sucesso! Faça seu login.');
-    }
+        // Garante que a mensagem comece escondida
+        if (msgErro) {
+            msgErro.style.display = 'none';
+        }
 
-    // Exibe a mensagem de erro vermelha quando o Spring Security envia ?error
-    if (urlParams.has('error')) {
-        var msgErro = document.getElementById('msg-erro');
-        msgErro.style.display = 'block';
-    }
+        // Exibe alerta de cadastro bem-sucedido
+        if (urlParams.has('sucesso')) {
+            alert('Cadastro realizado com sucesso! Faça seu login.');
+        }
 
-    // 2. Validação visual ao enviar o formulário
+        // Só exibe o erro se o parâmetro "error" existir E NÃO estiver vazio ou for "true"
+        const errorParam = urlParams.get('error');
+        if (errorParam !== null && (errorParam === '' || errorParam === 'true')) {
+            if (msgErro) msgErro.style.display = 'block';
+        }
+    });
+
+    // Validação visual ao enviar o formulário
     document.getElementById('form-login').addEventListener('submit', function(event) {
         var emailInput = document.getElementById('email').value;
         var msgErro = document.getElementById('msg-erro');
@@ -73,7 +80,7 @@
 
         if (!regexEmail.test(emailInput)) {
             event.preventDefault(); // Bloqueia o envio se o e-mail for mal formatado
-            msgErro.style.display = 'block';
+            if (msgErro) msgErro.style.display = 'block';
         }
     });
 </script>

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Work+Sans:wght@300;400;500;600&display=swap');
 
 body {
     background-color: #e2e4e8;
@@ -22,12 +22,13 @@ body {
     text-align: center;
 }
 
-h2 {
-    color: #c5a059;
-    font-weight: 500;
-    font-size: 24px;
-    margin-bottom: 25px;
-    letter-spacing: 0.5px;
+h1 {
+    font-family: 'Merriweather', serif;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    color: #c3a066;
+    margin-bottom: 8px;
+    text-transform: uppercase;
 }
 
 .input-group {
