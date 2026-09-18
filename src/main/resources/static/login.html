@@ -3,12 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Impede cache no mobile e navegadores de teste -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-
     <title>Login - Advocacia</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -17,29 +11,29 @@
 <div class="card-container">
     <h1>JURISYNC</h1>
 
-    <!-- Container do erro alimentado via JS -->
+    <!-- Container da mensagem de erro -->
     <div id="container-erro"></div>
 
     <form id="form-login" action="/login" method="POST">
         <div class="input-group">
             <label for="email">E-mail</label>
-            <input
-                    type="email"
-                    id="email"
-                    name="username"
-                    required
-                    placeholder="seuemail@exemplo.com"
+            <input 
+                type="email" 
+                id="email" 
+                name="username" 
+                required 
+                placeholder="seuemail@exemplo.com"
             >
         </div>
 
         <div class="input-group">
             <label for="senha">Senha</label>
-            <input
-                    type="password"
-                    id="senha"
-                    name="password"
-                    required
-                    placeholder="Digite sua senha"
+            <input 
+                type="password" 
+                id="senha" 
+                name="password" 
+                required 
+                placeholder="Digite sua senha"
             >
             <div class="esqueceu-senha">
                 <a href="recuperar-senha.html">Esqueceu sua senha?</a>
@@ -53,6 +47,7 @@
 </div>
 
 <script>
+    // Função auxiliar para renderizar a mensagem de erro no HTML
     function exibirErro(mensagem) {
         const container = document.getElementById('container-erro');
         if (container) {
@@ -67,19 +62,21 @@
     document.addEventListener('DOMContentLoaded', function() {
         const urlParams = new URLSearchParams(window.location.search);
 
+        // Alerta simples para pós-cadastro
         if (urlParams.has('sucesso')) {
             alert('Cadastro realizado com sucesso! Faça seu login.');
         }
 
-        const errorParam = urlParams.get('error');
-        if (errorParam === 'true') {
+        // Exibe o erro apenas se enviado explicitamente pelo Spring Security (?error=true)
+        if (urlParams.get('error') === 'true') {
             exibirErro('Email ou senha inválidos. Por favor, verifique suas credenciais e tente novamente.');
         }
     });
 
+    // Validação no cliente ao enviar o formulário
     document.getElementById('form-login').addEventListener('submit', function(event) {
-        var emailInput = document.getElementById('email').value;
-        var regexEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        const emailInput = document.getElementById('email').value;
+        const regexEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
         if (!regexEmail.test(emailInput)) {
             event.preventDefault();
