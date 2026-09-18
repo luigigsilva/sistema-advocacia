@@ -20,7 +20,8 @@ public class SegurancaConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/cadastro.html", "/login.html", "/recuperar-senha.html", "/cadastrar", "/style.css").permitAll()
+                        // Libera explicitamente a raiz "/", os HTMLs e assets estáticos
+                        .requestMatchers("/", "/login", "/login.html", "/cadastro.html", "/recuperar-senha.html", "/cadastrar", "/style.css", "/js/**", "/css/**", "/images/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
