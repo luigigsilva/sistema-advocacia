@@ -149,7 +149,7 @@
             let mensagem = '';
 
             if (!regexEmailStrict.test(emailInput) || regexDominioInvalido.test(dominio) || !emailInput.endsWith('.com')) {
-                mensagem = 'Informe um e-mail válido terminando em .com e sem caracteres especiais após o @.';
+                mensagem = 'Informe um e-mail válido.';
             }
             else if (senhaVal.length < 6) {
                 mensagem = 'A senha deve ter no mínimo 6 caracteres.';
