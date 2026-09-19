@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Work+Sans:wght@300;400;500;600&display=swap');
 
 body {
     background-color: #e2e4e8;
@@ -22,12 +22,13 @@ body {
     text-align: center;
 }
 
-h2 {
-    color: #c5a059;
-    font-weight: 500;
-    font-size: 24px;
-    margin-bottom: 25px;
-    letter-spacing: 0.5px;
+h1 {
+    font-family: 'Merriweather', serif;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    color: #c3a066;
+    margin-bottom: 8px;
+    text-transform: uppercase;
 }
 
 .input-group {
@@ -57,6 +58,24 @@ h2 {
 .input-group input:focus {
     outline: none;
     border-color: #c5a059;
+}
+
+.esqueceu-senha {
+    text-align: left;
+    margin-top: 6px;
+}
+
+.esqueceu-senha a {
+    color: #777777;
+    font-size: 12px;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.esqueceu-senha a:hover,
+.esqueceu-senha a:active {
+    color: #c5a059;
+    text-decoration: underline;
 }
 
 .btn-entrar {
@@ -93,16 +112,7 @@ p a:hover {
     color: #c5a059;
 }
 
-/* ↓↓↓ CSS DO DO CADASTRO  ↓↓↓ */
-/* ↓↓↓ CSS DO DO CADASTRO  ↓↓↓ */
-/* ↓↓↓ CSS DO DO CADASTRO  ↓↓↓ */
-/* ↓↓↓ CSS DO DO CADASTRO  ↓↓↓ */
-/* ↓↓↓ CSS DO DO CADASTRO  ↓↓↓ */
-/* ↓↓↓ CSS DO DO CADASTRO  ↓↓↓ */
-
-
-
-
+/* CSS DO CADASTRO */
 .page-cadastro,
 .page-cadastro * {
     margin: 0;

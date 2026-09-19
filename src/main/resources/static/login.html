@@ -9,34 +9,19 @@
 <body>
 
 <div class="card-container">
-    <h2>Acesso ao Sistema</h2>
+    <h1>JURISYNC</h1>
 
-    <!-- Mensagem de erro caso tente enviar e-mail inválido -->
-    <div id="msg-erro" style="display: none; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; font-size: 12px; margin-bottom: 15px;">
-        Email ou senha inválidos. Por favor, verifique suas credenciais e tente novamente.
-    </div>
+    <div id="container-erro"></div>
 
     <form id="form-login" action="/login" method="POST">
         <div class="input-group">
             <label for="email">E-mail</label>
-            <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    required
-                    placeholder="seuemail@exemplo.com"
-            >
+            <input type="email" id="email" name="username" required placeholder="seuemail@exemplo.com">
         </div>
 
         <div class="input-group">
             <label for="senha">Senha</label>
-            <input
-                    type="password"
-                    id="senha"
-                    name="senha"
-                    required
-                    placeholder="Digite sua senha"
-            >
+            <input type="password" id="senha" name="password" required placeholder="Digite sua senha">
             <div class="esqueceu-senha">
                 <a href="recuperar-senha.html">Esqueceu sua senha?</a>
             </div>
@@ -48,26 +33,37 @@
     <p><a href="cadastro.html">Não tenho conta (Cadastre-se)</a></p>
 </div>
 
-<!-- Script de validação rigorosa via JavaScript -->
 <script>
-    // Executa IMEDIATAMENTE ao carregar a página (Avisa que o cadastro deu certo)
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('sucesso')) {
-        alert('Cadastro realizado com sucesso! Faça seu login.');
+    function exibirErro(mensagem) {
+        const container = document.getElementById('container-erro');
+        if (container) {
+            container.innerHTML = `
+                <div style="background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; font-size: 12px; margin-bottom: 15px;">
+                    ${mensagem}
+                </div>
+            `;
+        }
     }
 
-    // Executa APENAS ao enviar o formulário (Validação visual)
-    document.getElementById('form-login').addEventListener('submit', function(event) {
-        var emailInput = document.getElementById('email').value;
-        var msgErro = document.getElementById('msg-erro');
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
 
-        var regexEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (urlParams.has('sucesso')) {
+            alert('Cadastro realizado com sucesso! Faça seu login.');
+        }
+
+        if (urlParams.get('error') === 'true') {
+            exibirErro('Email ou senha inválidos. Por favor, verifique suas credenciais e tente novamente.');
+        }
+    });
+
+    document.getElementById('form-login').addEventListener('submit', function(event) {
+        const emailInput = document.getElementById('email').value;
+        const regexEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
         if (!regexEmail.test(emailInput)) {
-            event.preventDefault(); // BLOQUEIA o envio do formulário
-            msgErro.style.display = 'block'; // Mostra o alerta na tela
-        } else {
-            msgErro.style.display = 'none';
+            event.preventDefault();
+            exibirErro('Por favor, informe um e-mail válido.');
         }
     });
 </script>

@@ -7,35 +7,37 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
-
 // Isso é a segurança, vai criptografar, gerenciar a sessão e o logout e definir permissões de rotas.
 @Configuration
 public class SegurancaConfig {
-
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // CADA PÁGINA NOVA TEM QUE SER ADICIONADA AQUI, SE N O SERVER EXPLODE:
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // QUE DESGRAÇA, CADA PÁGINA NOVA TEM QUE SER ADICIONADA AQUI, SE N O SERVER EXPLODE:
-                        .requestMatchers("/cadastro.html", "/login.html", "/recuperar-senha.html", "/cadastrar", "/style.css").permitAll()
+                        .requestMatchers("/", "/login", "/login.html", "/cadastro.html", "/recuperar-senha.html", "/cadastrar", "/style.css", "/js/**", "/css/**", "/images/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login.html")
                         .loginProcessingUrl("/login")
-                        .usernameParameter("email")
-                        .passwordParameter("senha")
+                        .usernameParameter("username")
+                        .passwordParameter("password")
                         .defaultSuccessUrl("/index.html", true)
-                        .failureUrl("/login.html?erro=true")
+                        .failureUrl("/login.html?error=true")
                         .permitAll()
+                )
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((request, response, authException) ->
+                                response.sendRedirect("/login.html")
+                        )
                 )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
