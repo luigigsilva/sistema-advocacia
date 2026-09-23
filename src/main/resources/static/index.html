@@ -3,97 +3,304 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Concluído</title>
-
-    <style>
-        body {
-            background-color: #121212;
-            color: #ffffff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-family: sans-serif;
-        }
-
-        .card {
-            background-color: #1e1e1e;
-            border: 1px solid #c5a059;
-            padding: 30px;
-            border-radius: 8px;
-            text-align: center;
-            max-width: 350px;
-        }
-
-        /* IMAGEM NO MEIO */
-        .imagem {
-            width: 150px;
-            height: 150px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin: 15px auto;
-            display: block;
-        }
-
-        h1 {
-            color: #c5a059;
-            margin: 0;
-            font-size: 22px;
-        }
-
-        /* ANIMAÇÃO DA COBRINHA RODANDO */
-        .cobrinha {
-            display: inline-block;
-            font-size: 30px;
-            margin-top: 15px;
-            animation: girar 2s linear infinite;
-        }
-
-        /* ESTILO DO BOTÃO DE LOGOUT */
-        .btn-logout {
-            margin-top: 25px;
-            background-color: transparent;
-            color: #c5a059;
-            border: 1px solid #c5a059;
-            padding: 8px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-
-        .btn-logout:hover {
-            background-color: #c5a059;
-            color: #121212;
-        }
-
-        @keyframes girar {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
-        }
-    </style>
+    <title>Painel de Casos - JURISYNC</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Work+Sans:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<div class="card">
-    <h1>Parabéns você fez login!!!</h1>
+<!-- Largura aumentada para 1500px para ocupar mais espaço na tela do PC -->
+<div class="card-container" style="max-width: 1500px; width: 95%; margin: 40px auto; padding: 40px; box-sizing: border-box; background: #fff; border: 2px solid #dcdcdc; border-radius: 10px; box-shadow: 0px 8px 20px rgba(0,0,0,0.1);">
+    
+    <!-- Cabeçalho (Título e Botões) -->
+    <div class="painel-header">
+        <h1>Painel de Casos</h1>
+        <div class="header-acoes">
+            <button class="btn-novo-caso" onclick="abrirModalNovo()">+ Novo Caso</button>
+            <a href="login.html" class="btn-sair">Sair</a>
+        </div>
+    </div>
 
-    <!-- COLOQUE O NOME DA SUA IMAGEM NO SRC ABAIXO -->
-    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDAnQB7g72ia9paJbCM7XwWKs8fg3mxwVnlc8PtS3Vvw&s=10" alt="Imagem" class="imagem">
+    <!-- Barra de Pesquisa 100% -->
+    <div class="barra-ferramentas">
+        <input type="text" id="pesquisaCaso" class="input-pesquisa" placeholder="Pesquisar por nº de processo ou tipo..." onkeyup="filtrarTabela()">
+    </div>
 
-    <!-- COBRINHA RODANDO NO FINAL -->
-    <div class="cobrinha">🐍</div>
-
-    <!-- FORMULÁRIO DE LOGOUT -->
-    <form action="/logout" method="POST">
-        <button type="submit" class="btn-logout">Sair</button>
-    </form>
+    <!-- Listagem de Casos -->
+    <table class="container-tabela" id="tabelaCasos">
+        <thead>
+            <tr>
+                <th>Nº Processo/Protocolo</th>
+                <th>Tipo</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="tabela-corpo">
+            <!-- As linhas serão injetadas via JavaScript aqui -->
+        </tbody>
+    </table>
 </div>
+
+<!-- Modal Pequeno (Estilo Login) com Fundo Desfocado -->
+<div id="modal-caso" class="modal">
+    <div class="modal-content">
+        <h2 id="titulo-modal">Novo Caso</h2>
+        
+        <!-- Caixa de erro para validações (Ex: duplicidade, números inválidos) -->
+        <div id="modal-erro"></div>
+        
+        <form id="form-caso">
+            <div class="input-group">
+                <label for="tipo">Tipo de Perícia *</label>
+                <select id="tipo" name="tipo" required>
+                    <option value="">Selecione...</option>
+                    <option value="Judicial">Judicial</option>
+                    <option value="Administrativa">Administrativa</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="processo">Nº do Processo/Protocolo *</label>
+                <input type="text" id="processo" name="processo" required placeholder="Ex: 0000000-00.0000.0.00.0000" maxlength="25">
+            </div>
+
+            <div class="input-group">
+                <label for="descricao">Descrição</label>
+                <textarea id="descricao" name="descricao" rows="2" placeholder="Detalhes breves..."></textarea>
+            </div>
+
+            <div class="input-group">
+                <label for="dataAbertura">Data de Abertura *</label>
+                <input type="date" id="dataAbertura" name="dataAbertura" required>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                <button type="submit" id="btn-salvar" class="btn-entrar">Salvar Caso</button>
+                <button type="button" class="btn-entrar" style="background-color: transparent; color: #333; border: 1px solid #ccc;" onclick="fecharModal()">Cancelar / Fechar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lógica em JavaScript -->
+<script>
+    // Banco de dados em memória (para gerenciar edições, duplicidades e listagem)
+    let casos = [];
+    let modoEdicao = false; 
+    let processoSendoEditado = "";
+
+    // Renderiza a tabela lendo o array de casos
+    function renderTabela() {
+        const tbody = document.getElementById('tabela-corpo');
+        tbody.innerHTML = ''; // Limpa a tabela
+        
+        // Se estiver vazio, exibe a mensagem
+        if (casos.length === 0) {
+            tbody.innerHTML = `
+                <tr id="mensagem-vazio">
+                    <td colspan="4" style="text-align: center; padding: 40px; color: #666; font-style: italic;">
+                        Você não tem nenhum protocolo cadastrado.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        // Caso tenha dados, monta as linhas
+        casos.forEach(caso => {
+            const tr = document.createElement('tr');
+            
+            // Define o badge de status
+            let badgeClass = caso.status === 'ativo' ? 'badge-ativo' : 'badge-encerrado';
+            let textoStatus = caso.status === 'ativo' ? 'Ativo' : 'Encerrado';
+
+            // Monta os botões. (Se ativo, permite encerrar)
+            let acoesHTML = `
+                <a href="#" class="link-acao" onclick="editarCaso('${caso.processo}')">Editar</a>
+                <a href="#" class="link-acao" onclick="consultarCaso('${caso.processo}')">Consultar</a>
+            `;
+            
+            if (caso.status === 'ativo') {
+                acoesHTML += `<a href="#" class="link-acao" style="color: #dc3545;" onclick="encerrarCaso('${caso.processo}')">Encerrar</a>`;
+            }
+
+            tr.innerHTML = `
+                <td>${caso.processo}</td>
+                <td>${caso.tipo}</td>
+                <td><span class="badge ${badgeClass}">${textoStatus}</span></td>
+                <td class="acoes-container">${acoesHTML}</td>
+            `;
+            tbody.prepend(tr); // Adiciona sempre no topo
+        });
+    }
+
+    // Máscara CNJ automática (0000000-00.0000.0.00.0000)
+    document.getElementById('processo').addEventListener('input', function(e) {
+        let x = e.target.value.replace(/\D/g, '').match(/(\d{0,7})(\d{0,2})(\d{0,4})(\d{0,1})(\d{0,2})(\d{0,4})/);
+        e.target.value = !x[2] ? x[1] : x[1] + '-' + x[2] + (x[3] ? '.' + x[3] : '') + (x[4] ? '.' + x[4] : '') + (x[5] ? '.' + x[5] : '') + (x[6] ? '.' + x[6] : '');
+    });
+
+    function setarDataAtual() {
+        const inputData = document.getElementById('dataAbertura');
+        const hoje = new Date().toISOString().split('T')[0];
+        inputData.value = hoje;
+    }
+
+    function limparFormulario() {
+        document.getElementById('form-caso').reset();
+        document.getElementById('modal-erro').innerHTML = '';
+        document.querySelectorAll('#form-caso input, #form-caso select, #form-caso textarea').forEach(el => el.disabled = false);
+        document.getElementById('btn-salvar').style.display = 'block';
+    }
+
+    function abrirModalNovo() {
+        modoEdicao = false;
+        processoSendoEditado = "";
+        
+        document.getElementById('modal-caso').style.display = 'flex';
+        limparFormulario();
+        document.getElementById('titulo-modal').innerText = 'Novo Caso';
+        setarDataAtual();
+    }
+
+    function fecharModal() {
+        document.getElementById('modal-caso').style.display = 'none';
+    }
+
+    // Editar caso existente
+    function editarCaso(numeroProcesso) {
+        let casoEncontrado = casos.find(c => c.processo === numeroProcesso);
+        if(!casoEncontrado) return;
+
+        modoEdicao = true;
+        processoSendoEditado = numeroProcesso;
+
+        document.getElementById('modal-caso').style.display = 'flex';
+        limparFormulario();
+        document.getElementById('titulo-modal').innerText = 'Editar Caso';
+
+        // Preenche os dados
+        document.getElementById('tipo').value = casoEncontrado.tipo;
+        document.getElementById('processo').value = casoEncontrado.processo;
+        document.getElementById('descricao').value = casoEncontrado.descricao;
+        document.getElementById('dataAbertura').value = casoEncontrado.dataAbertura;
+
+        // Regra: Bloquear edição de dados principais se o caso estiver encerrado
+        if (casoEncontrado.status !== 'ativo') {
+            document.getElementById('processo').disabled = true;
+            document.getElementById('tipo').disabled = true;
+            document.getElementById('modal-erro').innerHTML = `
+                <div class="erro-box" style="background-color: #fff3cd; color: #856404; border-color: #ffeeba;">
+                    <strong>Aviso:</strong> Este caso está encerrado. Dados principais não podem ser alterados.
+                </div>
+            `;
+        }
+    }
+
+    // Consultar caso (Apenas leitura)
+    function consultarCaso(numeroProcesso) {
+        editarCaso(numeroProcesso); // Reaproveita o preenchimento
+        document.getElementById('titulo-modal').innerText = 'Consultar Caso';
+        document.querySelectorAll('#form-caso input, #form-caso select, #form-caso textarea').forEach(el => el.disabled = true);
+        document.getElementById('btn-salvar').style.display = 'none';
+        document.getElementById('modal-erro').innerHTML = ''; // Limpa aviso se houver
+    }
+
+    // Encerrar o caso
+    function encerrarCaso(numeroProcesso) {
+        if (confirm(`Tem certeza que deseja ENCERRAR o processo ${numeroProcesso}?\nEle ficará disponível apenas para consulta.`)) {
+            let index = casos.findIndex(c => c.processo === numeroProcesso);
+            if (index !== -1) {
+                casos[index].status = 'encerrado';
+                renderTabela();
+            }
+        }
+    }
+
+    // Lógica de submissão do formulário (Salvar Novo ou Editar)
+    document.getElementById('form-caso').addEventListener('submit', function(event) {
+        event.preventDefault(); 
+
+        const processoVal = document.getElementById('processo').value;
+        const tipoVal = document.getElementById('tipo').value;
+        const descricaoVal = document.getElementById('descricao').value;
+        const dataAberturaVal = document.getElementById('dataAbertura').value;
+
+        // Validação de 20 dígitos numéricos
+        const numerosApenas = processoVal.replace(/\D/g, ''); 
+        if (numerosApenas.length !== 20) {
+            mostrarErro("O número do protocolo está incorreto (exige 20 dígitos).");
+            return; 
+        }
+
+        // Regra: Impedir cadastro de duplicado (apenas se for novo, ou se mudou o número num caso editado)
+        if (!modoEdicao || processoVal !== processoSendoEditado) {
+            let casoDuplicado = casos.find(c => c.processo === processoVal && c.status === 'ativo');
+            if (casoDuplicado) {
+                mostrarErro("Este número de processo já está cadastrado em um caso ATIVO.");
+                return;
+            }
+        }
+
+        if (modoEdicao) {
+            // Atualiza o objeto no array
+            let index = casos.findIndex(c => c.processo === processoSendoEditado);
+            if (index !== -1) {
+                casos[index].tipo = tipoVal;
+                casos[index].processo = processoVal;
+                casos[index].descricao = descricaoVal;
+                casos[index].dataAbertura = dataAberturaVal;
+            }
+        } else {
+            // Insere um novo caso no array com status 'ativo' padrão
+            casos.push({
+                processo: processoVal,
+                tipo: tipoVal,
+                descricao: descricaoVal,
+                dataAbertura: dataAberturaVal,
+                status: 'ativo'
+            });
+        }
+
+        renderTabela();
+        fecharModal();
+    });
+
+    function mostrarErro(mensagem) {
+        document.getElementById('modal-erro').innerHTML = `
+            <div class="erro-box">
+                ${mensagem}
+            </div>
+        `;
+    }
+
+    // Funcionalidade de pesquisa
+    function filtrarTabela() {
+        let input = document.getElementById("pesquisaCaso");
+        let filter = input.value.toUpperCase();
+        let table = document.getElementById("tabelaCasos");
+        let tr = table.getElementsByTagName("tr");
+
+        for (let i = 1; i < tr.length; i++) { 
+            if (tr[i].id === "mensagem-vazio") continue;
+            let tdProcesso = tr[i].getElementsByTagName("td")[0];
+            let tdTipo = tr[i].getElementsByTagName("td")[1];
+            if (tdProcesso || tdTipo) {
+                let txtValueProcesso = tdProcesso.textContent || tdProcesso.innerText;
+                let txtValueTipo = tdTipo.textContent || tdTipo.innerText;
+                if (txtValueProcesso.toUpperCase().indexOf(filter) > -1 || txtValueTipo.toUpperCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }       
+        }
+    }
+
+    // Inicializa a tabela vazia ao carregar
+    renderTabela();
+</script>
 
 </body>
 </html>
