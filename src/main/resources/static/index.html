@@ -270,27 +270,30 @@
         const descricaoVal = document.getElementById('descricao').value;
         const dataAberturaVal = document.getElementById('dataAbertura').value;
 
-        // Validação de 20 dígitos numéricos
+        // Validação de 20 dígitos numéricos (Aqui removemos a máscara apenas para checar e para enviar ao BD)
         const numerosApenas = processoVal.replace(/\D/g, '');
         if (numerosApenas.length !== 20) {
             mostrarErro("O número do protocolo está incorreto (exige 20 dígitos).");
             return;
         }
 
-        // Regra: Impedir cadastro de duplicado (apenas se for novo, ou se mudou o número num caso editado)
-        if (!modoEdicao || processoVal !== processoSendoEditado) {
-            let casoDuplicado = casos.find(c => (c.numeroProcesso || c.processo) === processoVal && c.status === 'ativo');
+        // Regra: Impedir cadastro de duplicado no frontend
+        if (!modoEdicao || numerosApenas !== processoSendoEditado.replace(/\D/g, '')) {
+            let casoDuplicado = casos.find(c => {
+                let numProcessoAtual = (c.numeroProcesso || c.processo).replace(/\D/g, '');
+                return numProcessoAtual === numerosApenas && c.status === 'ativo';
+            });
             if (casoDuplicado) {
                 mostrarErro("Este número de processo já está cadastrado em um caso ATIVO.");
                 return;
             }
         }
 
-        // Prepara o JSON para o Back-End
+        // Prepara o JSON para o Back-End usando 'numerosApenas' em vez do processo com máscara
         const payload = {
             id: casoIdVal ? parseInt(casoIdVal) : null,
             tipo: tipoVal,
-            numeroProcesso: processoVal,
+            numeroProcesso: numerosApenas, // Correção: envia apenas os 20 dígitos para o backend
             descricao: descricaoVal,
             dataAbertura: dataAberturaVal,
             status: modoEdicao ? statusSendoEditado : 'ativo'
@@ -307,7 +310,15 @@
                 fecharModal();
                 carregarCasosDoServidor(); // Recarrega os casos gravados no banco de dados
             } else {
-                mostrarErro("Erro ao salvar o caso no servidor.");
+                // Tenta exibir a mensagem exata do erro que o servidor enviou (se houver)
+                let msgErro = "Erro ao salvar o caso no servidor.";
+                try {
+                    const dadosErro = await resposta.json();
+                    if (dadosErro.message || dadosErro.erro) {
+                        msgErro = dadosErro.message || dadosErro.erro;
+                    }
+                } catch(e) {}
+                mostrarErro(msgErro);
             }
         } catch (erro) {
             mostrarErro("Erro de comunicação com o servidor.");
@@ -316,7 +327,7 @@
 
     function mostrarErro(mensagem) {
         document.getElementById('modal-erro').innerHTML = `
-            <div class="erro-box">
+            <div class="erro-box" style="background-color: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #f5c6cb;">
                 ${mensagem}
             </div>
         `;
