@@ -13,4 +13,9 @@ public interface CasoRepositorio extends JpaRepository<Caso, Long> {
 
     // Regra RN5: Garante que a busca por ID individual pertença ao usuário logado
     Optional<Caso> findByIdAndUsuario(Long id, Usuario usuario);
+
+    // RN006: Oculta os casos com status 'excluido' da listagem padrão
+    List<Caso> findByUsuarioAndStatusNot(Usuario usuario, String statusExcluido);
+
+    boolean existsByNumeroProcessoAndUsuarioAndStatus(String numeroProcesso, Usuario usuario, String status);
 }

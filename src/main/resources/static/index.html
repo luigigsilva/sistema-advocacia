@@ -11,13 +11,13 @@
 
 <!-- Largura aumentada para 1500px para ocupar mais espaço na tela do PC -->
 <div class="card-container" style="max-width: 1500px; width: 95%; margin: 40px auto; padding: 40px; box-sizing: border-box; background: #fff; border: 2px solid #dcdcdc; border-radius: 10px; box-shadow: 0px 8px 20px rgba(0,0,0,0.1);">
-    
+
     <!-- Cabeçalho (Título e Botões) -->
     <div class="painel-header">
         <h1>Painel de Casos</h1>
         <div class="header-acoes">
             <button class="btn-novo-caso" onclick="abrirModalNovo()">+ Novo Caso</button>
-            <a href="login.html" class="btn-sair">Sair</a>
+            <a href="/logout" class="btn-sair">Sair</a>
         </div>
     </div>
 
@@ -29,15 +29,15 @@
     <!-- Listagem de Casos -->
     <table class="container-tabela" id="tabelaCasos">
         <thead>
-            <tr>
-                <th>Nº Processo/Protocolo</th>
-                <th>Tipo</th>
-                <th>Status</th>
-                <th>Ações</th>
-            </tr>
+        <tr>
+            <th>Nº Processo/Protocolo</th>
+            <th>Tipo</th>
+            <th>Status</th>
+            <th>Ações</th>
+        </tr>
         </thead>
         <tbody id="tabela-corpo">
-            <!-- As linhas serão injetadas via JavaScript aqui -->
+        <!-- As linhas serão injetadas via JavaScript aqui -->
         </tbody>
     </table>
 </div>
@@ -46,11 +46,14 @@
 <div id="modal-caso" class="modal">
     <div class="modal-content">
         <h2 id="titulo-modal">Novo Caso</h2>
-        
+
         <!-- Caixa de erro para validações (Ex: duplicidade, números inválidos) -->
         <div id="modal-erro"></div>
-        
+
         <form id="form-caso">
+            <!-- Campo oculto para guardar o ID do caso em edições -->
+            <input type="hidden" id="casoId" name="casoId">
+
             <div class="input-group">
                 <label for="tipo">Tipo de Perícia *</label>
                 <select id="tipo" name="tipo" required>
@@ -85,18 +88,34 @@
 
 <!-- Lógica em JavaScript -->
 <script>
-    // Banco de dados em memória (para gerenciar edições, duplicidades e listagem)
+    // Banco de dados em memória (sincronizado com o PostgreSQL via Back-End)
     let casos = [];
-    let modoEdicao = false; 
+    let modoEdicao = false;
     let processoSendoEditado = "";
+    let statusSendoEditado = "ativo";
+
+    // Busca os casos pertencentes ao usuário autenticado diretamente do Spring Boot
+    async function carregarCasosDoServidor() {
+        try {
+            const resposta = await fetch('/api/casos');
+            if (resposta.ok) {
+                casos = await resposta.json();
+                renderTabela();
+            } else if (resposta.status === 401) {
+                window.location.href = '/login.html';
+            }
+        } catch (erro) {
+            console.error('Erro ao conectar ao servidor:', erro);
+        }
+    }
 
     // Renderiza a tabela lendo o array de casos
     function renderTabela() {
         const tbody = document.getElementById('tabela-corpo');
         tbody.innerHTML = ''; // Limpa a tabela
-        
+
         // Se estiver vazio, exibe a mensagem
-        if (casos.length === 0) {
+        if (!casos || casos.length === 0) {
             tbody.innerHTML = `
                 <tr id="mensagem-vazio">
                     <td colspan="4" style="text-align: center; padding: 40px; color: #666; font-style: italic;">
@@ -110,23 +129,28 @@
         // Caso tenha dados, monta as linhas
         casos.forEach(caso => {
             const tr = document.createElement('tr');
-            
+
+            // Aceita a propriedade vinda do Java (numeroProcesso) ou do JS local (processo)
+            const numProcesso = caso.numeroProcesso || caso.processo;
+
             // Define o badge de status
             let badgeClass = caso.status === 'ativo' ? 'badge-ativo' : 'badge-encerrado';
             let textoStatus = caso.status === 'ativo' ? 'Ativo' : 'Encerrado';
 
             // Monta os botões. (Se ativo, permite encerrar)
             let acoesHTML = `
-                <a href="#" class="link-acao" onclick="editarCaso('${caso.processo}')">Editar</a>
-                <a href="#" class="link-acao" onclick="consultarCaso('${caso.processo}')">Consultar</a>
+                <a href="#" class="link-acao" onclick="editarCaso('${numProcesso}')">Editar</a>
+                <a href="#" class="link-acao" onclick="consultarCaso('${numProcesso}')">Consultar</a>
             `;
-            
+
             if (caso.status === 'ativo') {
-                acoesHTML += `<a href="#" class="link-acao" style="color: #dc3545;" onclick="encerrarCaso('${caso.processo}')">Encerrar</a>`;
+                acoesHTML += `<a href="#" class="link-acao" style="color: #dc3545;" onclick="encerrarCaso('${numProcesso}')">Encerrar</a>`;
             }
 
+            acoesHTML += `<a href="#" class="link-acao" style="color: #6c757d;" onclick="excluirCaso('${numProcesso}')">Excluir</a>`;
+
             tr.innerHTML = `
-                <td>${caso.processo}</td>
+                <td>${numProcesso}</td>
                 <td>${caso.tipo}</td>
                 <td><span class="badge ${badgeClass}">${textoStatus}</span></td>
                 <td class="acoes-container">${acoesHTML}</td>
@@ -149,6 +173,7 @@
 
     function limparFormulario() {
         document.getElementById('form-caso').reset();
+        document.getElementById('casoId').value = '';
         document.getElementById('modal-erro').innerHTML = '';
         document.querySelectorAll('#form-caso input, #form-caso select, #form-caso textarea').forEach(el => el.disabled = false);
         document.getElementById('btn-salvar').style.display = 'block';
@@ -157,7 +182,8 @@
     function abrirModalNovo() {
         modoEdicao = false;
         processoSendoEditado = "";
-        
+        statusSendoEditado = "ativo";
+
         document.getElementById('modal-caso').style.display = 'flex';
         limparFormulario();
         document.getElementById('titulo-modal').innerText = 'Novo Caso';
@@ -170,20 +196,22 @@
 
     // Editar caso existente
     function editarCaso(numeroProcesso) {
-        let casoEncontrado = casos.find(c => c.processo === numeroProcesso);
+        let casoEncontrado = casos.find(c => (c.numeroProcesso || c.processo) === numeroProcesso);
         if(!casoEncontrado) return;
 
         modoEdicao = true;
         processoSendoEditado = numeroProcesso;
+        statusSendoEditado = casoEncontrado.status;
 
         document.getElementById('modal-caso').style.display = 'flex';
         limparFormulario();
         document.getElementById('titulo-modal').innerText = 'Editar Caso';
 
         // Preenche os dados
+        document.getElementById('casoId').value = casoEncontrado.id || '';
         document.getElementById('tipo').value = casoEncontrado.tipo;
-        document.getElementById('processo').value = casoEncontrado.processo;
-        document.getElementById('descricao').value = casoEncontrado.descricao;
+        document.getElementById('processo').value = casoEncontrado.numeroProcesso || casoEncontrado.processo;
+        document.getElementById('descricao').value = casoEncontrado.descricao || '';
         document.getElementById('dataAbertura').value = casoEncontrado.dataAbertura;
 
         // Regra: Bloquear edição de dados principais se o caso estiver encerrado
@@ -207,64 +235,83 @@
         document.getElementById('modal-erro').innerHTML = ''; // Limpa aviso se houver
     }
 
-    // Encerrar o caso
-    function encerrarCaso(numeroProcesso) {
+    // Encerrar o caso no banco de dados e atualizar tela
+    async function encerrarCaso(numeroProcesso) {
+        let casoEncontrado = casos.find(c => (c.numeroProcesso || c.processo) === numeroProcesso);
+        if (!casoEncontrado) return;
+
         if (confirm(`Tem certeza que deseja ENCERRAR o processo ${numeroProcesso}?\nEle ficará disponível apenas para consulta.`)) {
-            let index = casos.findIndex(c => c.processo === numeroProcesso);
-            if (index !== -1) {
-                casos[index].status = 'encerrado';
-                renderTabela();
+            try {
+                if (casoEncontrado.id) {
+                    const resposta = await fetch(`/api/casos/${casoEncontrado.id}/encerrar`, {
+                        method: 'PUT'
+                    });
+                    if (!resposta.ok) {
+                        mostrarErro("Erro ao encerrar o caso no servidor.");
+                        return;
+                    }
+                }
+
+                carregarCasosDoServidor();
+
+            } catch (erro) {
+                console.error("Erro de conexão:", erro);
             }
         }
     }
 
-    // Lógica de submissão do formulário (Salvar Novo ou Editar)
-    document.getElementById('form-caso').addEventListener('submit', function(event) {
-        event.preventDefault(); 
+    // Lógica de submissão do formulário (Salvar Novo ou Editar com persistência no banco)
+    document.getElementById('form-caso').addEventListener('submit', async function(event) {
+        event.preventDefault();
 
+        const casoIdVal = document.getElementById('casoId').value;
         const processoVal = document.getElementById('processo').value;
         const tipoVal = document.getElementById('tipo').value;
         const descricaoVal = document.getElementById('descricao').value;
         const dataAberturaVal = document.getElementById('dataAbertura').value;
 
         // Validação de 20 dígitos numéricos
-        const numerosApenas = processoVal.replace(/\D/g, ''); 
+        const numerosApenas = processoVal.replace(/\D/g, '');
         if (numerosApenas.length !== 20) {
             mostrarErro("O número do protocolo está incorreto (exige 20 dígitos).");
-            return; 
+            return;
         }
 
         // Regra: Impedir cadastro de duplicado (apenas se for novo, ou se mudou o número num caso editado)
         if (!modoEdicao || processoVal !== processoSendoEditado) {
-            let casoDuplicado = casos.find(c => c.processo === processoVal && c.status === 'ativo');
+            let casoDuplicado = casos.find(c => (c.numeroProcesso || c.processo) === processoVal && c.status === 'ativo');
             if (casoDuplicado) {
                 mostrarErro("Este número de processo já está cadastrado em um caso ATIVO.");
                 return;
             }
         }
 
-        if (modoEdicao) {
-            // Atualiza o objeto no array
-            let index = casos.findIndex(c => c.processo === processoSendoEditado);
-            if (index !== -1) {
-                casos[index].tipo = tipoVal;
-                casos[index].processo = processoVal;
-                casos[index].descricao = descricaoVal;
-                casos[index].dataAbertura = dataAberturaVal;
-            }
-        } else {
-            // Insere um novo caso no array com status 'ativo' padrão
-            casos.push({
-                processo: processoVal,
-                tipo: tipoVal,
-                descricao: descricaoVal,
-                dataAbertura: dataAberturaVal,
-                status: 'ativo'
-            });
-        }
+        // Prepara o JSON para o Back-End
+        const payload = {
+            id: casoIdVal ? parseInt(casoIdVal) : null,
+            tipo: tipoVal,
+            numeroProcesso: processoVal,
+            descricao: descricaoVal,
+            dataAbertura: dataAberturaVal,
+            status: modoEdicao ? statusSendoEditado : 'ativo'
+        };
 
-        renderTabela();
-        fecharModal();
+        try {
+            const resposta = await fetch('/api/casos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (resposta.ok) {
+                fecharModal();
+                carregarCasosDoServidor(); // Recarrega os casos gravados no banco de dados
+            } else {
+                mostrarErro("Erro ao salvar o caso no servidor.");
+            }
+        } catch (erro) {
+            mostrarErro("Erro de comunicação com o servidor.");
+        }
     });
 
     function mostrarErro(mensagem) {
@@ -282,7 +329,7 @@
         let table = document.getElementById("tabelaCasos");
         let tr = table.getElementsByTagName("tr");
 
-        for (let i = 1; i < tr.length; i++) { 
+        for (let i = 1; i < tr.length; i++) {
             if (tr[i].id === "mensagem-vazio") continue;
             let tdProcesso = tr[i].getElementsByTagName("td")[0];
             let tdTipo = tr[i].getElementsByTagName("td")[1];
@@ -294,12 +341,35 @@
                 } else {
                     tr[i].style.display = "none";
                 }
-            }       
+            }
         }
     }
 
-    // Inicializa a tabela vazia ao carregar
-    renderTabela();
+    // RF007: Chamada de Exclusão Lógica no servidor
+    async function excluirCaso(numeroProcesso) {
+        let casoEncontrado = casos.find(c => (c.numeroProcesso || c.processo) === numeroProcesso);
+        if (!casoEncontrado) return;
+
+        if (confirm(`Atenção: Deseja realmente EXCLUIR o caso ${numeroProcesso}?\nEle será ocultado da listagem, mas mantido em histórico.`)) {
+            try {
+                if (casoEncontrado.id) {
+                    const resposta = await fetch(`/api/casos/${casoEncontrado.id}`, {
+                        method: 'DELETE'
+                    });
+                    if (!resposta.ok) {
+                        alert("Erro ao excluir o caso no servidor.");
+                        return;
+                    }
+                }
+                carregarCasosDoServidor(); // Recarrega a tabela (o servidor não retornará mais este caso)
+            } catch (erro) {
+                console.error("Erro de conexão ao excluir:", erro);
+            }
+        }
+    }
+
+    // Carrega os dados do banco assim que a página é aberta
+    carregarCasosDoServidor();
 </script>
 
 </body>
