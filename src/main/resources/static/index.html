@@ -6,6 +6,41 @@
     <title>Painel de Casos - JURISYNC</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Work+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Corrige o alinhamento das linhas da tabela */
+        .container-tabela {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .container-tabela th, .container-tabela td {
+            text-align: left !important; /* Força o alinhamento reto */
+            padding: 12px 8px;
+            vertical-align: middle;
+            border-bottom: 1px solid #eee;
+        }
+        
+        /* Prepara o modal para receber o botão X */
+        .modal-content {
+            position: relative; 
+        }
+        
+        /* Estilo do Botão X */
+        .btn-fechar-x {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: transparent;
+            border: none;
+            font-size: 28px;
+            color: #999;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .btn-fechar-x:hover {
+            color: #333;
+        }
+    </style>
 </head>
 <body>
 
@@ -33,109 +68,3 @@
             <th>Tipo</th>
             <th>Status</th>
             <th>Ações</th>
-        </tr>
-        </thead>
-        <tbody id="tabela-corpo">
-        <!-- As linhas serão injetadas via JavaScript aqui -->
-        </tbody>
-    </table>
-</div>
-
-<!-- Modal: Novo/Editar Caso -->
-<div id="modal-caso" class="modal" style="display: none;">
-    <div class="modal-content">
-        <h2 id="titulo-modal">Novo Caso</h2>
-        <div id="modal-erro"></div>
-        <form id="form-caso">
-            <input type="hidden" id="casoId" name="casoId">
-
-            <div class="input-group">
-                <label for="tipo">Tipo de Perícia *</label>
-                <select id="tipo" name="tipo" required>
-                    <option value="">Selecione...</option>
-                    <option value="Judicial">Judicial</option>
-                    <option value="Administrativa">Administrativa</option>
-                </select>
-            </div>
-
-            <div class="input-group">
-                <label for="processo">Nº do Processo/Protocolo *</label>
-                <input type="text" id="processo" name="processo" required placeholder="Ex: 0000000-00.0000.0.00.0000" maxlength="25">
-            </div>
-
-            <div class="input-group">
-                <label for="descricao">Descrição</label>
-                <textarea id="descricao" name="descricao" rows="2" placeholder="Detalhes breves..."></textarea>
-            </div>
-
-            <div class="input-group">
-                <label for="dataAbertura">Data de Abertura *</label>
-                <input type="date" id="dataAbertura" name="dataAbertura" required>
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
-                <button type="submit" id="btn-salvar" class="btn-entrar">Salvar Caso</button>
-                <button type="button" class="btn-entrar" style="background-color: transparent; color: #333; border: 1px solid #ccc;" onclick="fecharModal()">Cancelar / Fechar</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Modal: Controle de Prazos -->
-<div id="modal-prazos" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 600px;">
-        <h2 id="titulo-modal-prazos">Prazos do Processo</h2>
-        <div id="modal-erro-prazos"></div>
-
-        <!-- Formulário de Cadastro do Prazo (RF009 e RF018) -->
-        <form id="form-prazo" style="border-bottom: 1px solid #eee; padding-bottom: 20px; margin-bottom: 20px;">
-            <input type="hidden" id="casoIdParaPrazo">
-            
-            <div class="input-group">
-                <label for="descPrazo">Descrição da Atividade *</label>
-                <input type="text" id="descPrazo" required placeholder="Ex: Apresentar defesa prévia">
-            </div>
-
-            <div style="display: flex; gap: 15px;">
-                <div class="input-group" style="flex: 1;">
-                    <label for="dataVencimento">Data de Vencimento *</label>
-                    <input type="date" id="dataVencimento" required>
-                </div>
-                <div class="input-group" style="flex: 1;">
-                    <label for="tipoContagem">Contagem *</label>
-                    <select id="tipoContagem" required>
-                        <option value="DIAS_UTEIS">Dias Úteis</option>
-                        <option value="DIAS_CORRIDOS">Dias Corridos</option>
-                    </select>
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button type="submit" class="btn-entrar" style="width: auto; padding: 10px 20px;">Adicionar Prazo</button>
-                <button type="button" class="btn-entrar" style="background-color: transparent; color: #333; border: 1px solid #ccc; width: auto; padding: 10px 20px;" onclick="fecharModalPrazos()">Fechar</button>
-            </div>
-        </form>
-
-        <!-- Listagem de Prazos (RF010 e RF011) -->
-        <h3 style="font-size: 16px; margin-bottom: 10px;">Prazos Cadastrados</h3>
-        <table class="container-tabela">
-            <thead>
-                <tr>
-                    <th style="padding: 8px;">Descrição</th>
-                    <th style="padding: 8px;">Vencimento</th>
-                    <th style="padding: 8px;">Status</th>
-                    <th style="padding: 8px;">Ações</th>
-                </tr>
-            </thead>
-            <tbody id="tabela-corpo-prazos">
-                <!-- Linhas injetadas via JS -->
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- Ligação com o ficheiro JavaScript externo -->
-<script src="casos.js"></script>
-
-</body>
-</html>

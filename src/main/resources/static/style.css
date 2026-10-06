@@ -270,7 +270,7 @@ h1, h2 {
 }
 .header-acoes {
     display: flex;
-    gap: 15px; /* Espaço entre o botão Novo Caso e o Sair */
+    gap: 15px;
     align-items: center;
 }
 .barra-ferramentas {
@@ -278,7 +278,7 @@ h1, h2 {
 }
 .input-pesquisa {
     width: 100%;
-    max-width: 100%; /* Estica até o final */
+    max-width: 100%;
     padding: 12px 15px;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -295,6 +295,7 @@ h1, h2 {
     border: 1px solid #ddd;
     padding: 14px;
     text-align: left;
+    vertical-align: middle;
 }
 .container-tabela th {
     background-color: #f4f4f4;
@@ -313,65 +314,4 @@ h1, h2 {
 
 .acoes-container { display: flex; gap: 12px; }
 .link-acao { text-decoration: none; font-weight: bold; font-size: 14px; color: #007bff; }
-.link-acao:hover { color: #0056b3; text-decoration: underline; }
-
-/* Botões do Topo */
-.btn-sair {
-    background-color: #dc3545; color: white; border: none;
-    padding: 10px 20px; border-radius: 4px; cursor: pointer;
-    text-decoration: none; font-weight: bold;
-}
-.btn-sair:hover { background-color: #c82333; }
-
-.btn-novo-caso {
-    background-color: #222; color: #fff; border: none;
-    padding: 10px 20px; border-radius: 4px; cursor: pointer;
-    font-weight: bold; transition: 0.3s;
-}
-.btn-novo-caso:hover { background-color: #444; }
-
-.btn-entrar {
-    background-color: #222; color: #fff; border: none;
-    padding: 12px; border-radius: 4px; cursor: pointer;
-    font-weight: bold; width: 100%; transition: 0.3s;
-}
-.btn-entrar:hover { background-color: #444; }
-
-/* =========================================
-   MODAL, FORMULÁRIOS E ERROS
-   ========================================= */
-
-/* Modal Desfocado */
-.modal {
-    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    justify-content: center; align-items: center; z-index: 1000;
-}
-.modal-content {
-    background: #fff; padding: 40px 30px; border-radius: 8px;
-    width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-}
-.modal-content h2 { text-align: center; margin-bottom: 20px; font-size: 22px; }
-
-/* Correção de Selects, Inputs e Calendário */
-.input-group label {
-    display: block; font-size: 13px; font-weight: 600; color: #333;
-}
-.input-group select, .input-group input, .input-group textarea {
-    width: 100%; padding: 10px; border: 1px solid #ccc;
-    border-radius: 4px; box-sizing: border-box; margin-top: 5px;
-    margin-bottom: 15px; background-color: #fff;
-}
-.input-group select:focus, .input-group input:focus, .input-group textarea:focus {
-    border-color: #007bff; outline: none;
-}
-.input-group input:disabled, .input-group select:disabled, .input-group textarea:disabled {
-    background-color: #f4f4f4; color: #666; cursor: not-allowed;
-}
-
-/* Blocos de Erros */
-.erro-box {
-    background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
-    padding: 12px; border-radius: 4px; font-size: 13px; margin-bottom: 20px;
-}
+.link-acao:
