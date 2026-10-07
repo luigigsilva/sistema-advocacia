@@ -5,13 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Casos - JURISYNC</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Work+Sans:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<div class="card-container" style="max-width: 1500px; width: 95%; margin: 40px auto; padding: 40px; box-sizing: border-box; background: #fff; border: 2px solid #dcdcdc; border-radius: 10px; box-shadow: 0px 8px 20px rgba(0,0,0,0.1);">
+<div class="card-container painel-casos">
 
-    <!-- Cabeçalho -->
+    <!-- Cabeçalho do Painel -->
     <div class="painel-header">
         <h1>Painel de Casos</h1>
         <div class="header-acoes">
@@ -20,30 +19,47 @@
         </div>
     </div>
 
-    <!-- Barra de Pesquisa -->
+    <!-- Campo de Filtro/Pesquisa -->
     <div class="barra-ferramentas">
         <input type="text" id="pesquisaCaso" class="input-pesquisa" placeholder="Pesquisar por nº de processo ou tipo..." onkeyup="filtrarTabela()">
     </div>
 
-    <!-- Listagem de Casos -->
+    <!-- Tabela Principal de Casos -->
     <table class="container-tabela" id="tabelaCasos">
         <thead>
-        <tr>
-            <th>Nº Processo/Protocolo</th>
-            <th>Tipo</th>
-            <th>Status</th>
-            <th>Ações</th>
-        </tr>
+            <tr>
+                <th>Nº Processo/Protocolo</th>
+                <th>Tipo</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
         </thead>
         <tbody id="tabela-corpo">
-        <!-- As linhas serão injetadas via JavaScript aqui -->
+            <!-- Exemplo de estrutura gerada via JS: -->
+            <!--
+            <tr>
+                <td>0000000-00.0000.0.00.0000</td>
+                <td>Judicial</td>
+                <td><span class="badge badge-ativo">Ativo</span></td>
+                <td>
+                    <div class="acoes-container">
+                        <a href="#" class="link-acao">Prazos</a>
+                        <a href="#" class="link-acao">Editar</a>
+                        <a href="#" class="link-acao">Consultar</a>
+                        <a href="#" class="link-acao" style="color:#dc3545;">Encerrar</a>
+                        <a href="#" class="link-acao" style="color:#dc3545;">Excluir</a>
+                    </div>
+                </td>
+            </tr>
+            -->
         </tbody>
     </table>
+
 </div>
 
 <!-- Modal: Novo/Editar Caso -->
-<div id="modal-caso" class="modal" style="display: none;">
-    <div class="modal-content" style="position: relative;">
+<div id="modal-caso" class="modal">
+    <div class="modal-content">
         <button type="button" class="btn-fechar-modal" onclick="fecharModal()">&times;</button>
         <h2 id="titulo-modal">Novo Caso</h2>
         <div id="modal-erro"></div>
@@ -74,7 +90,7 @@
                 <input type="date" id="dataAbertura" name="dataAbertura" required>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+            <div class="input-group">
                 <button type="submit" id="btn-salvar" class="btn-entrar">Concluir</button>
             </div>
         </form>
@@ -82,14 +98,13 @@
 </div>
 
 <!-- Modal: Controle de Prazos -->
-<div id="modal-prazos" class="modal" style="display: none;">
-    <div class="modal-content" style="position: relative; max-width: 600px;">
+<div id="modal-prazos" class="modal">
+    <div class="modal-content modal-prazos-content">
         <button type="button" class="btn-fechar-modal" onclick="fecharModalPrazos()">&times;</button>
         <h2 id="titulo-modal-prazos">Prazos do Processo</h2>
         <div id="modal-erro-prazos"></div>
 
-        <!-- Formulário de Cadastro do Prazo (RF009 e RF018) -->
-        <form id="form-prazo" style="border-bottom: 1px solid #eee; padding-bottom: 20px; margin-bottom: 20px;">
+        <form id="form-prazo" class="form-prazos-container">
             <input type="hidden" id="casoIdParaPrazo">
             
             <div class="input-group">
@@ -97,12 +112,12 @@
                 <input type="text" id="descPrazo" required placeholder="Ex: Apresentar defesa prévia">
             </div>
 
-            <div style="display: flex; gap: 15px;">
-                <div class="input-group" style="flex: 1;">
+            <div class="form-row">
+                <div class="input-group form-col">
                     <label for="dataVencimento">Data de Vencimento *</label>
                     <input type="date" id="dataVencimento" required>
                 </div>
-                <div class="input-group" style="flex: 1;">
+                <div class="input-group form-col">
                     <label for="tipoContagem">Contagem *</label>
                     <select id="tipoContagem" required>
                         <option value="DIAS_UTEIS">Dias Úteis</option>
@@ -111,30 +126,28 @@
                 </div>
             </div>
 
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button type="submit" class="btn-entrar" style="width: auto; padding: 10px 20px;">Adicionar Prazo</button>
+            <div class="input-group">
+                <button type="submit" class="btn-entrar btn-adicionar-prazo">Adicionar Prazo</button>
             </div>
         </form>
 
-        <!-- Listagem de Prazos (RF010 e RF011) -->
-        <h3 style="font-size: 16px; margin-bottom: 10px;">Prazos Cadastrados</h3>
-        <table class="container-tabela">
+        <h3 class="subtitulo-secao">Prazos Cadastrados</h3>
+        <table class="container-tabela tabela-prazos">
             <thead>
                 <tr>
-                    <th style="padding: 8px;">Descrição</th>
-                    <th style="padding: 8px;">Vencimento</th>
-                    <th style="padding: 8px;">Status</th>
-                    <th style="padding: 8px;">Ações</th>
+                    <th>Descrição</th>
+                    <th>Vencimento</th>
+                    <th>Status</th>
+                    <th>Ações</th>
                 </tr>
             </thead>
             <tbody id="tabela-corpo-prazos">
-                <!-- Linhas injetadas via JS -->
+                <!-- Linhas injetadas via JavaScript -->
             </tbody>
         </table>
     </div>
 </div>
 
-<!-- Ligação com o ficheiro JavaScript externo -->
 <script src="casos.js"></script>
 
 </body>

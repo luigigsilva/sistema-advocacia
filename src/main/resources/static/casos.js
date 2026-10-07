@@ -6,6 +6,30 @@ let modoEdicao = false;
 let processoSendoEditado = "";
 let statusSendoEditado = "ativo";
 
+// Inicializa a aplicação assim que o DOM estiver carregado
+document.addEventListener('DOMContentLoaded', () => {
+    // Configura a máscara do número de processo (CNJ)
+    const inputProcesso = document.getElementById('processo');
+    if (inputProcesso) {
+        inputProcesso.addEventListener('input', aplicarMascaraCNJ);
+    }
+
+    // Evento de envio do formulário de caso
+    const formCaso = document.getElementById('form-caso');
+    if (formCaso) {
+        formCaso.addEventListener('submit', salvarCaso);
+    }
+
+    // Evento de envio do formulário de prazos
+    const formPrazo = document.getElementById('form-prazo');
+    if (formPrazo) {
+        formPrazo.addEventListener('submit', salvarPrazo);
+    }
+
+    // Carrega a listagem do servidor
+    carregarCasosDoServidor();
+});
+
 // ==========================================
 // MÓDULO DE CASOS (Listagem e CRUD)
 // ==========================================
@@ -25,6 +49,8 @@ async function carregarCasosDoServidor() {
 
 function renderTabela() {
     const tbody = document.getElementById('tabela-corpo');
+    if (!tbody) return;
+
     tbody.innerHTML = '';
 
     if (!casos || casos.length === 0) {
@@ -41,10 +67,10 @@ function renderTabela() {
     casos.forEach(caso => {
         const tr = document.createElement('tr');
         const numProcesso = caso.numeroProcesso || caso.processo;
-        let badgeClass = caso.status === 'ativo' ? 'badge-ativo' : 'badge-encerrado';
-        let textoStatus = caso.status === 'ativo' ? 'Ativo' : 'Encerrado';
+        const badgeClass = caso.status === 'ativo' ? 'badge-ativo' : 'badge-encerrado';
+        const textoStatus = caso.status === 'ativo' ? 'Ativo' : 'Encerrado';
 
-        // Botões de ação (Novo botão de Prazos incluído)
+        // Botões de ação
         let acoesHTML = `
             <a href="#" class="link-acao" style="color: #17a2b8;" onclick="abrirModalPrazos('${numProcesso}')">Prazos</a>
             <a href="#" class="link-acao" onclick="editarCaso('${numProcesso}')">Editar</a>
@@ -61,32 +87,39 @@ function renderTabela() {
             <td>${numProcesso}</td>
             <td>${caso.tipo}</td>
             <td><span class="badge ${badgeClass}">${textoStatus}</span></td>
-            <td class="acoes-container">${acoesHTML}</td>
+            <td><div class="acoes-container">${acoesHTML}</div></td>
         `;
         tbody.prepend(tr);
     });
 }
 
 // Máscara CNJ automática
-document.getElementById('processo').addEventListener('input', function(e) {
+function aplicarMascaraCNJ(e) {
     let x = e.target.value.replace(/\D/g, '').match(/(\d{0,7})(\d{0,2})(\d{0,4})(\d{0,1})(\d{0,2})(\d{0,4})/);
     e.target.value = !x[2] ? x[1] : x[1] + '-' + x[2] + (x[3] ? '.' + x[3] : '') + (x[4] ? '.' + x[4] : '') + (x[5] ? '.' + x[5] : '') + (x[6] ? '.' + x[6] : '');
-});
+}
 
 function setarDataAtual() {
     const inputData = document.getElementById('dataAbertura');
-    const hoje = new Date().toISOString().split('T')[0];
-    inputData.value = hoje;
+    if (inputData) {
+        const hoje = new Date().toISOString().split('T')[0];
+        inputData.value = hoje;
+    }
 }
 
 function limparFormulario() {
-    document.getElementById('form-caso').reset();
+    const form = document.getElementById('form-caso');
+    if (form) form.reset();
+
     document.getElementById('casoId').value = '';
     document.getElementById('modal-erro').innerHTML = '';
     document.querySelectorAll('#form-caso input, #form-caso select, #form-caso textarea').forEach(el => el.disabled = false);
+    
     const btnSalvar = document.getElementById('btn-salvar');
-    btnSalvar.style.display = 'block';
-    btnSalvar.innerText = 'Concluir';
+    if (btnSalvar) {
+        btnSalvar.style.display = 'block';
+        btnSalvar.innerText = 'Concluir';
+    }
 }
 
 function abrirModalNovo() {
@@ -105,7 +138,7 @@ function fecharModal() {
 
 function editarCaso(numeroProcesso) {
     let casoEncontrado = casos.find(c => (c.numeroProcesso || c.processo) === numeroProcesso);
-    if(!casoEncontrado) return;
+    if (!casoEncontrado) return;
 
     modoEdicao = true;
     processoSendoEditado = numeroProcesso;
@@ -136,7 +169,10 @@ function consultarCaso(numeroProcesso) {
     editarCaso(numeroProcesso);
     document.getElementById('titulo-modal').innerText = 'Consultar Caso';
     document.querySelectorAll('#form-caso input, #form-caso select, #form-caso textarea').forEach(el => el.disabled = true);
-    document.getElementById('btn-salvar').style.display = 'none';
+    
+    const btnSalvar = document.getElementById('btn-salvar');
+    if (btnSalvar) btnSalvar.style.display = 'none';
+    
     document.getElementById('modal-erro').innerHTML = '';
 }
 
@@ -160,7 +196,7 @@ async function encerrarCaso(numeroProcesso) {
     }
 }
 
-document.getElementById('form-caso').addEventListener('submit', async function(event) {
+async function salvarCaso(event) {
     event.preventDefault();
 
     const casoIdVal = document.getElementById('casoId').value;
@@ -213,117 +249,14 @@ document.getElementById('form-caso').addEventListener('submit', async function(e
             try {
                 const dadosErro = await resposta.json();
                 if (dadosErro.message || dadosErro.erro) msgErro = dadosErro.message || dadosErro.erro;
-            } catch(e) {}
+            } catch (e) {}
             mostrarErro(msgErro);
         }
     } catch (erro) {
         mostrarErro("Erro de comunicação com o servidor.");
     }
-});
+}
 
 function mostrarErro(mensagem) {
     document.getElementById('modal-erro').innerHTML = `
-        <div class="erro-box" style="background-color: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #f5c6cb;">
-            ${mensagem}
-        </div>
-    `;
-}
-
-function filtrarTabela() {
-    let input = document.getElementById("pesquisaCaso");
-    let filter = input.value.toUpperCase();
-    let table = document.getElementById("tabelaCasos");
-    let tr = table.getElementsByTagName("tr");
-
-    for (let i = 1; i < tr.length; i++) {
-        if (tr[i].id === "mensagem-vazio") continue;
-        let tdProcesso = tr[i].getElementsByTagName("td")[0];
-        let tdTipo = tr[i].getElementsByTagName("td")[1];
-        if (tdProcesso || tdTipo) {
-            let txtValueProcesso = tdProcesso.textContent || tdProcesso.innerText;
-            let txtValueTipo = tdTipo.textContent || tdTipo.innerText;
-            if (txtValueProcesso.toUpperCase().indexOf(filter) > -1 || txtValueTipo.toUpperCase().indexOf(filter) > -1) {
-                tr[i].style.display = "";
-            } else {
-                tr[i].style.display = "none";
-            }
-        }
-    }
-}
-
-async function excluirCaso(numeroProcesso) {
-    let casoEncontrado = casos.find(c => (c.numeroProcesso || c.processo) === numeroProcesso);
-    if (!casoEncontrado) return;
-
-    if (confirm(`Atenção: Deseja realmente EXCLUIR o caso ${numeroProcesso}?\nEle será ocultado da listagem, mas mantido em histórico.`)) {
-        try {
-            if (casoEncontrado.id) {
-                const resposta = await fetch(`/api/casos/${casoEncontrado.id}`, { method: 'DELETE' });
-                if (!resposta.ok) {
-                    alert("Erro ao excluir o caso no servidor.");
-                    return;
-                }
-            }
-            carregarCasosDoServidor();
-        } catch (erro) {
-            console.error("Erro de conexão ao excluir:", erro);
-        }
-    }
-}
-
-// ==========================================
-// MÓDULO DE CONTROLE DE PRAZOS
-// ==========================================
-function abrirModalPrazos(numeroProcesso) {
-    let casoEncontrado = casos.find(c => (c.numeroProcesso || c.processo) === numeroProcesso);
-    if (!casoEncontrado) return;
-
-    document.getElementById('casoIdParaPrazo').value = casoEncontrado.id;
-    document.getElementById('titulo-modal-prazos').innerText = `Prazos - Proc: ${numeroProcesso}`;
-    
-    // Regra de negócio: data de vencimento não pode ser no passado
-    const hoje = new Date().toISOString().split('T')[0];
-    document.getElementById('dataVencimento').setAttribute('min', hoje);
-
-    document.getElementById('modal-prazos').style.display = 'flex';
-    renderListaPrazosMock();
-}
-
-function fecharModalPrazos() {
-    document.getElementById('modal-prazos').style.display = 'none';
-    document.getElementById('form-prazo').reset();
-}
-
-function renderListaPrazosMock() {
-    const tbody = document.getElementById('tabela-corpo-prazos');
-    tbody.innerHTML = `
-        <tr>
-            <td style="padding: 8px; font-size: 14px;">Entregar Laudo</td>
-            <td style="padding: 8px; font-size: 14px;">15/11/2026</td>
-            <td style="padding: 8px;"><span class="badge badge-ativo" style="font-size: 11px;">Pendente</span></td>
-            <td style="padding: 8px;">
-                <a href="#" class="link-acao" style="color: #28a745; font-size: 13px;">✔ Cumprir</a>
-                <a href="#" class="link-acao" style="font-size: 13px;">✏ Editar</a>
-            </td>
-        </tr>
-    `;
-}
-
-document.getElementById('form-prazo').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const payloadPrazo = {
-        casoId: parseInt(document.getElementById('casoIdParaPrazo').value),
-        descricao: document.getElementById('descPrazo').value,
-        dataVencimento: document.getElementById('dataVencimento').value,
-        tipoContagem: document.getElementById('tipoContagem').value
-    };
-
-    console.log("JSON pronto para o Backend:", payloadPrazo);
-    alert("Dados do prazo preparados com sucesso! Verifique a consola (F12) para ver o JSON.");
-    
-    document.getElementById('form-prazo').reset();
-});
-
-// Inicialização da aplicação
-carregarCasosDoServidor();
+        <div class="erro-box" style="background-color: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 15px; border-radius:
