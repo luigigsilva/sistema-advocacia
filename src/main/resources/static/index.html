@@ -35,23 +35,7 @@
             </tr>
         </thead>
         <tbody id="tabela-corpo">
-            <!-- Exemplo de estrutura gerada via JS: -->
-            <!--
-            <tr>
-                <td>0000000-00.0000.0.00.0000</td>
-                <td>Judicial</td>
-                <td><span class="badge badge-ativo">Ativo</span></td>
-                <td>
-                    <div class="acoes-container">
-                        <a href="#" class="link-acao">Prazos</a>
-                        <a href="#" class="link-acao">Editar</a>
-                        <a href="#" class="link-acao">Consultar</a>
-                        <a href="#" class="link-acao" style="color:#dc3545;">Encerrar</a>
-                        <a href="#" class="link-acao" style="color:#dc3545;">Excluir</a>
-                    </div>
-                </td>
-            </tr>
-            -->
+            <!-- Linhas injetadas via JavaScript -->
         </tbody>
     </table>
 
@@ -102,11 +86,15 @@
     <div class="modal-content modal-prazos-content">
         <button type="button" class="btn-fechar-modal" onclick="fecharModalPrazos()">&times;</button>
         <h2 id="titulo-modal-prazos">Prazos do Processo</h2>
-        <div id="modal-erro-prazos"></div>
+        
+        <!-- ID ajustado para bater com o JavaScript -->
+        <div id="modal-prazo-erro"></div>
 
         <form id="form-prazo" class="form-prazos-container">
+            <!-- Inputs Ocultos de Controle -->
             <input type="hidden" id="casoIdParaPrazo">
-            
+            <input type="hidden" id="prazoId">
+
             <div class="input-group">
                 <label for="descPrazo">Descrição da Atividade *</label>
                 <input type="text" id="descPrazo" required placeholder="Ex: Apresentar defesa prévia">
@@ -119,15 +107,16 @@
                 </div>
                 <div class="input-group form-col">
                     <label for="tipoContagem">Contagem *</label>
+                    <!-- Valores ajustados para bater com as regras do JS -->
                     <select id="tipoContagem" required>
-                        <option value="DIAS_UTEIS">Dias Úteis</option>
-                        <option value="DIAS_CORRIDOS">Dias Corridos</option>
+                        <option value="corridos">Dias Corridos</option>
+                        <option value="uteis">Dias Úteis</option>
                     </select>
                 </div>
             </div>
 
             <div class="input-group">
-                <button type="submit" class="btn-entrar btn-adicionar-prazo">Adicionar Prazo</button>
+                <button type="submit" id="btn-salvar-prazo" class="btn-entrar btn-adicionar-prazo">Cadastrar Prazo</button>
             </div>
         </form>
 
@@ -137,6 +126,7 @@
                 <tr>
                     <th>Descrição</th>
                     <th>Vencimento</th>
+                    <th>Contagem</th>
                     <th>Status</th>
                     <th>Ações</th>
                 </tr>

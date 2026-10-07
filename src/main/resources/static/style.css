@@ -268,17 +268,24 @@ body.page-cadastro {
     color: #333;
 }
 
-/* Larguras fixas e proporcionais para cada coluna */
-.container-tabela th:nth-child(1) { width: 30%; }
-.container-tabela th:nth-child(2) { width: 20%; }
-.container-tabela th:nth-child(3) { width: 15%; }
-.container-tabela th:nth-child(4) { width: 35%; }
+/* Larguras fixas para a tabela principal de CASOS (4 colunas) */
+#tabelaCasos th:nth-child(1) { width: 30%; }
+#tabelaCasos th:nth-child(2) { width: 20%; }
+#tabelaCasos th:nth-child(3) { width: 15%; }
+#tabelaCasos th:nth-child(4) { width: 35%; }
 
+/* Larguras ajustadas para a tabela de PRAZOS (5 colunas) */
 .container-tabela.tabela-prazos th,
 .container-tabela.tabela-prazos td {
     padding: 8px;
     font-size: 14px;
 }
+
+.container-tabela.tabela-prazos th:nth-child(1) { width: 30%; } /* Descrição */
+.container-tabela.tabela-prazos th:nth-child(2) { width: 18%; } /* Vencimento */
+.container-tabela.tabela-prazos th:nth-child(3) { width: 17%; } /* Contagem */
+.container-tabela.tabela-prazos th:nth-child(4) { width: 15%; } /* Status */
+.container-tabela.tabela-prazos th:nth-child(5) { width: 20%; } /* Ações */
 
 /* Badges e Ações */
 .badge {
@@ -452,7 +459,7 @@ body.page-cadastro {
 }
 
 .modal-content.modal-prazos-content {
-    max-width: 600px;
+    max-width: 650px;
 }
 
 .modal-content h2 { 
