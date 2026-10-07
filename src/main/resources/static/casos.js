@@ -1,5 +1,5 @@
 // ==========================================
-// FUNÇÕES AUXILIARES (CNJ, DATAS E STATUS)
+// FUNÇÕES AUXILIARES (CNJ, DATAS, IDS, XSS E STATUS)
 // ==========================================
 
 function formatarCNJ(numero) {
@@ -9,7 +9,7 @@ function formatarCNJ(numero) {
     return limpo.replace(/(\d{7})(\d{2})(\d{4})(\d{1})(\d{2})(\d{4})/, '$1-$2.$3.$4.$5.$6');
 }
 
-// Corrigi o Ponto 1: Trata strings YYYY-MM-DD diretamente sem passar pelo new Date(UTC), evitando a perda de 1 dia pelo fuso BR (UTC-3)
+// Trata datas locais sem perdas de 1 dia pelo fuso BR (UTC-3)
 function formatarDataLocal(data = new Date()) {
     if (typeof data === 'string') {
         const apenasData = data.split('T')[0];
@@ -20,6 +20,23 @@ function formatarDataLocal(data = new Date()) {
     const mes = String(data.getMonth() + 1).padStart(2, '0');
     const dia = String(data.getDate()).padStart(2, '0');
     return `${ano}-${mes}-${dia}`;
+}
+
+// Converte IDs de forma segura (previne NaN com UUIDs ou Strings do backend)
+function converterIdSeguro(id) {
+    if (id === null || id === undefined || id === '') return null;
+    return /^\d+$/.test(String(id)) ? parseInt(id, 10) : String(id);
+}
+
+// Sanitiza strings para prevenir vulnerabilidades de DOM XSS
+function escaparHTML(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
 // ==========================================
@@ -64,17 +81,36 @@ async function carregarCasosDoServidor() {
         const resposta = await fetch('/api/casos');
         if (resposta.ok) {
             const dados = await resposta.json();
-            casos = dados.map(cServidor => {
-                const casoExistente = casos.find(c => 
-                    c.id == cServidor.id || 
-                    (c.numeroProcesso || c.processo) === (cServidor.numeroProcesso || cServidor.processo)
-                );
-                return {
-                    ...cServidor,
-                    prazos: cServidor.prazos || (casoExistente ? casoExistente.prazos : [])
-                };
-            });
-            renderTabelaCasos();
+
+            if (Array.isArray(dados)) {
+                const idsBackend = new Set(dados.map(d => String(d.id)));
+                const cnjsBackend = new Set(dados.map(d => (d.numeroProcesso || d.processo || '').replace(/\D/g, '')));
+                
+                // Mantém casos locais apenas se não existirem no servidor nem por ID nem por CNJ
+                const casosLocaisNaoSincronizados = casos.filter(c => {
+                    const cnjLocal = (c.numeroProcesso || c.processo || '').replace(/\D/g, '');
+                    return c.id && !idsBackend.has(String(c.id)) && !cnjsBackend.has(cnjLocal);
+                });
+
+                casos = [
+                    ...dados.map(cServidor => {
+                        const casoExistente = casos.find(c => 
+                            String(c.id) === String(cServidor.id) || 
+                            (c.numeroProcesso || c.processo || '').replace(/\D/g, '') === (cServidor.numeroProcesso || cServidor.processo || '').replace(/\D/g, '')
+                        );
+                        
+                        const prazosServidor = Array.isArray(cServidor.prazos) && cServidor.prazos.length > 0 ? cServidor.prazos : null;
+                        const prazosLocais = casoExistente ? casoExistente.prazos : [];
+
+                        return {
+                            ...cServidor,
+                            prazos: prazosServidor || prazosLocais
+                        };
+                    }),
+                    ...casosLocaisNaoSincronizados
+                ];
+                renderTabelaCasos();
+            }
         } else if (resposta.status === 401) {
             window.location.href = '/login.html';
         }
@@ -123,9 +159,9 @@ function renderTabelaCasos() {
         acoesHTML += `<a href="#" class="link-acao" style="color: #6c757d;" onclick="excluirCaso('${numProcessoLimpo}')">Excluir</a>`;
 
         tr.innerHTML = `
-            <td>${numProcessoFormatado}</td>
-            <td>${caso.tipo}</td>
-            <td><span class="badge ${badgeClass}">${textoStatus}</span></td>
+            <td>${escaparHTML(numProcessoFormatado)}</td>
+            <td>${escaparHTML(caso.tipo)}</td>
+            <td><span class="badge ${badgeClass}">${escaparHTML(textoStatus)}</span></td>
             <td class="acoes-container">${acoesHTML}</td>
         `;
         tbody.appendChild(tr);
@@ -149,8 +185,12 @@ function limparFormularioCaso() {
     const form = document.getElementById('form-caso');
     if (form) form.reset();
 
-    document.getElementById('casoId').value = '';
-    document.getElementById('modal-erro').innerHTML = '';
+    const campoCasoId = document.getElementById('casoId');
+    if (campoCasoId) campoCasoId.value = '';
+
+    const modalErro = document.getElementById('modal-erro');
+    if (modalErro) modalErro.innerHTML = '';
+
     document.querySelectorAll('#form-caso input, #form-caso select, #form-caso textarea').forEach(el => el.disabled = false);
     
     const btnSalvar = document.getElementById('btn-salvar');
@@ -264,19 +304,29 @@ async function salvarCaso(event) {
         return;
     }
 
-    if (!modoEdicaoCaso) {
-        const jaExiste = casos.some(c => (c.numeroProcesso || c.processo || '').replace(/\D/g, '') === numerosApenas);
-        if (jaExiste) {
-            mostrarErroCaso("Já existe um caso cadastrado (ativo ou encerrado) com este número de protocolo.");
-            return;
-        }
+    const jaExisteOutro = casos.some(c => {
+        const cNum = (c.numeroProcesso || c.processo || '').replace(/\D/g, '');
+        const cId = c.id ? String(c.id) : null;
+        const idAtual = casoIdVal ? String(casoIdVal) : null;
+        
+        if (idAtual && cId === idAtual) return false;
+        
+        return cNum === numerosApenas;
+    });
+
+    if (jaExisteOutro) {
+        mostrarErroCaso("Já existe um caso cadastrado (ativo ou encerrado) com este número de protocolo.");
+        return;
     }
 
-    const casoExistente = casos.find(c => (c.numeroProcesso || c.processo || '').replace(/\D/g, '') === numerosApenas || c.id == casoIdVal);
+    const casoExistente = casoIdVal 
+        ? casos.find(c => String(c.id) === String(casoIdVal))
+        : casos.find(c => (c.numeroProcesso || c.processo || '').replace(/\D/g, '') === numerosApenas);
+
     const prazosGuardados = casoExistente ? (casoExistente.prazos || []) : [];
 
     const payload = {
-        id: casoIdVal ? parseInt(casoIdVal) : Date.now(),
+        id: casoIdVal ? converterIdSeguro(casoIdVal) : Date.now(),
         tipo: tipoVal,
         numeroProcesso: numerosApenas,
         descricao: descricaoVal,
@@ -285,7 +335,10 @@ async function salvarCaso(event) {
         prazos: prazosGuardados
     };
 
-    const idx = casos.findIndex(c => (c.id && c.id == payload.id) || (c.numeroProcesso || c.processo || '').replace(/\D/g, '') === payload.numeroProcesso);
+    const idx = (modoEdicaoCaso && casoIdVal)
+        ? casos.findIndex(c => String(c.id) === String(payload.id))
+        : casos.findIndex(c => (c.numeroProcesso || c.processo || '').replace(/\D/g, '') === payload.numeroProcesso);
+
     if (idx >= 0) {
         casos[idx] = payload;
     } else {
@@ -308,7 +361,16 @@ async function salvarCaso(event) {
         if (resposta.ok) {
             const casoServidor = await resposta.json();
             if (casoServidor && casoServidor.id) {
-                payload.id = casoServidor.id;
+                const idServidorSeguro = converterIdSeguro(casoServidor.id);
+                payload.id = idServidorSeguro;
+
+                if (payload.prazos && payload.prazos.length > 0) {
+                    payload.prazos.forEach(p => {
+                        p.casoId = idServidorSeguro;
+                        if (p.caso) p.caso.id = idServidorSeguro;
+                    });
+                }
+                renderTabelaCasos();
             }
         }
     } catch (erro) {
@@ -317,13 +379,15 @@ async function salvarCaso(event) {
 }
 
 function mostrarErroCaso(mensagem) {
-    document.getElementById('modal-erro').innerHTML = `<div class="erro-box">${mensagem}</div>`;
+    document.getElementById('modal-erro').innerHTML = `<div class="erro-box">${escaparHTML(mensagem)}</div>`;
 }
 
 function filtrarTabela() {
     let input = document.getElementById("pesquisaCaso");
-    let filter = input.value.toUpperCase();
     let table = document.getElementById("tabelaCasos");
+    if (!input || !table) return;
+
+    let filter = input.value.toUpperCase();
     let tr = table.getElementsByTagName("tr");
 
     for (let i = 1; i < tr.length; i++) {
@@ -346,7 +410,11 @@ function calcularVencimento(dataInicioISO, quantidadeDias, tipoContagem) {
     if (!dataInicioISO || isNaN(quantidadeDias) || quantidadeDias <= 0) return '';
     
     const partes = dataInicioISO.split('T')[0].split('-');
-    let data = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+    let data = new Date(
+        parseInt(partes[0], 10), 
+        parseInt(partes[1], 10) - 1, 
+        parseInt(partes[2], 10)
+    );
     
     let diasAdicionados = 0;
     const ehDiasUteis = (tipoContagem || '').toUpperCase() === 'DIAS_UTEIS' || tipoContagem === 'uteis';
@@ -374,15 +442,17 @@ function recalcularVencimentoAuto() {
 
     if (!elDias || !elContagem || !elVencimento) return;
 
-    const qtdDias = parseInt(elDias.value);
+    const qtdDias = parseInt(elDias.value, 10);
     const tipoContagem = elContagem.value;
     
     const dataInicioRef = (prazoEmEdicao && prazoEmEdicao.dataCadastro) 
         ? prazoEmEdicao.dataCadastro.split('T')[0] 
         : formatarDataLocal(new Date());
 
-    if (qtdDias > 0) {
+    if (!isNaN(qtdDias) && qtdDias > 0) {
         elVencimento.value = calcularVencimento(dataInicioRef, qtdDias, tipoContagem);
+    } else if (!prazoEmEdicao) {
+        elVencimento.value = '';
     }
 }
 
@@ -430,13 +500,20 @@ function fecharModalPrazos() {
     limparFormularioPrazo();
 }
 
-// Corrigi o Ponto 4: Restaura a visibilidade do formulário por padrão ao limpar
 function limparFormularioPrazo() {
     prazoEmEdicao = null;
+    
+    const casoIdAtual = document.getElementById('casoIdParaPrazo')?.value;
+    
     const form = document.getElementById('form-prazo');
     if (form) {
         form.reset();
         form.style.display = 'block';
+    }
+
+    if (casoIdAtual) {
+        const elCasoIdParaPrazo = document.getElementById('casoIdParaPrazo');
+        if (elCasoIdParaPrazo) elCasoIdParaPrazo.value = casoIdAtual;
     }
 
     document.getElementById('prazoId').value = '';
@@ -493,7 +570,7 @@ function renderTabelaPrazos() {
     }
 
     const casoIdVal = document.getElementById('casoIdParaPrazo')?.value;
-    const casoAtual = casos.find(c => c.id == casoIdVal);
+    const casoAtual = casos.find(c => String(c.id) === String(casoIdVal));
     const isCasoEncerrado = casoAtual && (casoAtual.status || '').toUpperCase() === 'ENCERRADO';
 
     prazos.forEach(prazo => {
@@ -509,13 +586,15 @@ function renderTabelaPrazos() {
         const partesData = dataVencStr.split('-');
         const dataFormatada = partesData.length === 3 ? `${partesData[2]}/${partesData[1]}/${partesData[0]}` : dataVencStr;
 
+        const idEscapado = escaparHTML(String(prazo.id));
+
         let acoesHTML = '';
         if (isCumprido || isCasoEncerrado) {
-            acoesHTML = `<a href="#" class="link-acao" style="color: #17a2b8;" onclick="consultarPrazo(${prazo.id})">👁 Consultar</a>`;
+            acoesHTML = `<a href="#" class="link-acao" style="color: #17a2b8;" onclick="consultarPrazo('${idEscapado}')">👁 Consultar</a>`;
         } else {
             acoesHTML = `
-                <a href="#" class="link-acao" style="color: #28a745; margin-right: 8px;" onclick="marcarPrazoComoCumprido(${prazo.id})">✔ Cumprir</a>
-                <a href="#" class="link-acao" style="margin-right: 8px;" onclick="carregarPrazoParaEdicao(${prazo.id})">✏ Editar/Prorrogar</a>
+                <a href="#" class="link-acao" style="color: #28a745; margin-right: 8px;" onclick="marcarPrazoComoCumprido('${idEscapado}')">✔ Cumprir</a>
+                <a href="#" class="link-acao" style="margin-right: 8px;" onclick="carregarPrazoParaEdicao('${idEscapado}')">✏ Editar/Prorrogar</a>
             `;
         }
 
@@ -523,10 +602,10 @@ function renderTabelaPrazos() {
         const tagHistorico = qtdHistorico > 0 ? `<br><small style="color:#6c757d;">(Alterado ${qtdHistorico}x)</small>` : '';
 
         tr.innerHTML = `
-            <td>${prazo.descricao}</td>
-            <td>${dataFormatada} ${tagHistorico}</td>
-            <td>${tipoContagemTexto}</td>
-            <td><span class="badge ${statusClass}">${statusTexto}</span></td>
+            <td>${escaparHTML(prazo.descricao)}</td>
+            <td>${escaparHTML(dataFormatada)}${tagHistorico}</td>
+            <td>${escaparHTML(tipoContagemTexto)}</td>
+            <td><span class="badge ${statusClass}">${escaparHTML(statusTexto)}</span></td>
             <td>${acoesHTML}</td>
         `;
         tbody.appendChild(tr);
@@ -536,7 +615,7 @@ function renderTabelaPrazos() {
 function consultarPrazo(prazoId) {
     limparFormularioPrazo();
 
-    const prazo = prazos.find(p => p.id == prazoId);
+    const prazo = prazos.find(p => String(p.id) === String(prazoId));
     if (!prazo) return;
 
     prazoEmEdicao = prazo;
@@ -557,9 +636,8 @@ function consultarPrazo(prazoId) {
     mostrarErroPrazo(`<strong>Modo Consulta (RN013):</strong> Prazo indisponível para alterações.`, "#d1ecf1", "#0c5460", "#bee5eb");
 }
 
-// Corrigi o Ponto 2: Atualiza o atributo min para a data de cadastro do prazo para evitar bloqueios do HTML5 na edição
 function carregarPrazoParaEdicao(prazoId) {
-    const prazo = prazos.find(p => p.id == prazoId);
+    const prazo = prazos.find(p => String(p.id) === String(prazoId));
     if (!prazo) return;
 
     if ((prazo.status || '').toUpperCase() === 'CUMPRIDO') {
@@ -588,16 +666,20 @@ function carregarPrazoParaEdicao(prazoId) {
 }
 
 async function marcarPrazoComoCumprido(prazoId) {
-    const prazo = prazos.find(p => p.id == prazoId);
+    const prazo = prazos.find(p => String(p.id) === String(prazoId));
     if (!prazo) return;
 
     if (confirm(`Deseja marcar o prazo "${prazo.descricao}" como CUMPRIDO?`)) {
         prazo.status = 'CUMPRIDO';
-        try {
-            await fetch(`/api/prazos/${prazoId}/cumprir`, { method: 'PUT' });
-        } catch (e) {}
+        
         renderTabelaPrazos();
         limparFormularioPrazo();
+
+        try {
+            await fetch(`/api/prazos/${prazoId}/cumprir`, { method: 'PUT' });
+        } catch (e) {
+            console.warn("Falha na sincronização do prazo cumprido com o backend.", e);
+        }
     }
 }
 
@@ -611,8 +693,7 @@ async function salvarPrazo(e) {
     const diasVal = document.getElementById('diasPrazo').value;
     const prazoIdVal = document.getElementById('prazoId').value;
 
-    // Corrigi o Ponto 3: Uso de comparação não-estrita (==) para englobar ID numérico ou string vindo do backend
-    let casoEncontrado = casos.find(c => c.id == casoIdVal);
+    let casoEncontrado = casos.find(c => String(c.id) === String(casoIdVal));
     if (!casoEncontrado) {
         mostrarErroPrazo("<strong>RN009:</strong> O prazo deve estar vinculado a um caso pericial existente.");
         return;
@@ -656,11 +737,11 @@ async function salvarPrazo(e) {
     }
 
     const payloadPrazo = {
-        id: prazoIdVal ? parseInt(prazoIdVal) : Date.now(),
-        caso: { id: parseInt(casoIdVal) },
-        casoId: parseInt(casoIdVal),
+        id: prazoIdVal ? converterIdSeguro(prazoIdVal) : Date.now(),
+        caso: { id: converterIdSeguro(casoIdVal) },
+        casoId: converterIdSeguro(casoIdVal),
         descricao: descVal,
-        dias: diasVal ? parseInt(diasVal) : null,
+        dias: diasVal ? parseInt(diasVal, 10) : null,
         dataVencimento: dataVencimentoVal,
         tipoContagem: tipoContagemVal,
         formaContagem: tipoContagemVal,
@@ -671,7 +752,7 @@ async function salvarPrazo(e) {
 
     if (!casoEncontrado.prazos) casoEncontrado.prazos = [];
     
-    const idx = casoEncontrado.prazos.findIndex(p => p.id == payloadPrazo.id);
+    const idx = casoEncontrado.prazos.findIndex(p => String(p.id) === String(payloadPrazo.id));
     if (idx >= 0) {
         casoEncontrado.prazos[idx] = payloadPrazo;
     } else {
@@ -679,6 +760,9 @@ async function salvarPrazo(e) {
     }
 
     prazos = casoEncontrado.prazos;
+
+    limparFormularioPrazo();
+    renderTabelaPrazos();
 
     try {
         const urlDestino = prazoIdVal ? `/api/prazos/${prazoIdVal}` : '/api/prazos';
@@ -693,16 +777,17 @@ async function salvarPrazo(e) {
         if (resposta.ok) {
             const prazoBackend = await resposta.json();
             if (prazoBackend && prazoBackend.id) {
-                const pos = casoEncontrado.prazos.findIndex(p => p.id == payloadPrazo.id);
-                if (pos >= 0) casoEncontrado.prazos[pos] = prazoBackend;
+                const pos = casoEncontrado.prazos.findIndex(p => String(p.id) === String(payloadPrazo.id));
+                if (pos >= 0) {
+                    casoEncontrado.prazos[pos] = prazoBackend;
+                    prazos = casoEncontrado.prazos;
+                    renderTabelaPrazos();
+                }
             }
         }
     } catch (erro) {
         console.warn("Servidor offline. Prazo mantido localmente.");
     }
-
-    limparFormularioPrazo();
-    renderTabelaPrazos();
 }
 
 function mostrarErroPrazo(mensagem, bg = "#f8d7da", color = "#721c24", border = "#f5c6cb") {
