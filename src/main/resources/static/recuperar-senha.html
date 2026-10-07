@@ -15,10 +15,8 @@
             Informe o seu e-mail cadastrado para receber o link de redefinição de senha.
         </p>
 
-        <!-- Mensagem de erro caso tente enviar e-mail inválido -->
-        <div id="msg-erro" style="display: none; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; font-size: 12px; margin-bottom: 15px;">
-            Por favor, insira um e-mail completo com @ e ponto (ex: .com).
-        </div>
+        <!-- Mensagem de erro dinâmica -->
+        <div id="msg-erro" style="display: none; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; font-size: 12px; margin-bottom: 15px;"></div>
 
         <form id="form-recuperar" action="login.html" method="GET">
             <div class="input-group">
@@ -45,45 +43,60 @@
         <p><a href="login.html">Voltar para o Login</a></p>
     </div>
 
-    <!-- Script de validação, timer e alternância do botão -->
+    <!-- Script de validação, consulta de cadastro e timer -->
     <script>
         var temporizador = null;
 
-        document.getElementById('form-recuperar').addEventListener('submit', function(event) {
-            event.preventDefault(); // Impede o envio para processar a lógica na tela
+        // Lista de e-mails simulados cadastrados (apenas para testes locais sem servidor)
+        const emailsCadastrados = [
+            'usuario@exemplo.com',
+            'advogado@advocacia.com',
+            'cliente@email.com'
+        ];
 
-            var emailInput = document.getElementById('email-recuperacao').value;
+        document.getElementById('form-recuperar').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Impede o envio padrão
+
+            var emailInput = document.getElementById('email-recuperacao').value.trim().toLowerCase();
             var msgErro = document.getElementById('msg-erro');
             var btnEnviar = document.getElementById('btn-enviar');
             var textoReenviar = document.getElementById('texto-reenviar');
             var spanContador = document.getElementById('contador');
 
-            // Regra rígida de e-mail com .com / extensão
+            // 1. Validação de formato do e-mail
             var regexEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
             if (!regexEmail.test(emailInput)) {
+                msgErro.innerHTML = 'Por favor, insira um e-mail completo com @ e ponto (ex: .com).';
                 msgErro.style.display = 'block';
                 return;
             }
 
-            // Oculta mensagem de erro se o e-mail for válido
+            // 2. Validação se o e-mail possui cadastro
+            const possuiCadastro = emailsCadastrados.includes(emailInput);
+
+            if (!possuiCadastro) {
+                msgErro.innerHTML = 'Esta conta não existe.';
+                msgErro.style.display = 'block';
+                return;
+            }
+
+            // Oculta mensagem de erro caso o e-mail seja válido e cadastrado
             msgErro.style.display = 'none';
 
-            // Desabilita o botão e muda para estado cinza
+            // Desabilita o botão e altera o estado do botão
             btnEnviar.textContent = 'Link enviado';
             btnEnviar.disabled = true;
             btnEnviar.style.backgroundColor = '#888888';
             btnEnviar.style.cursor = 'not-allowed';
 
-            // Exibe a contagem regressiva abaixo do botão
+            // Exibe a contagem regressiva
             var tempoRestante = 30;
             spanContador.textContent = tempoRestante;
             textoReenviar.style.display = 'inline-block';
 
-            // Limpa temporizador anterior se houver
             if (temporizador) clearInterval(temporizador);
 
-            // Inicia o timer de 30 segundos
             temporizador = setInterval(function() {
                 tempoRestante--;
                 spanContador.textContent = tempoRestante;
@@ -91,13 +104,11 @@
                 if (tempoRestante <= 0) {
                     clearInterval(temporizador);
                     
-                    // Restaura o botão ao estado original
                     btnEnviar.textContent = 'Enviar Link';
                     btnEnviar.disabled = false;
                     btnEnviar.style.backgroundColor = '#2c2c2c';
                     btnEnviar.style.cursor = 'pointer';
 
-                    // Oculta o texto de reenviar
                     textoReenviar.style.display = 'none';
                 }
             }, 1000);
