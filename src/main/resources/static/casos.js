@@ -200,17 +200,16 @@ async function encerrarCaso(numeroProcesso) {
     }
 }
 
-// CORREÇÃO 1: EXCLUIR CASO (Remove da tela imediatamente)
 async function excluirCaso(numeroProcesso) {
     let casoEncontrado = casos.find(c => (c.numeroProcesso || c.processo) === numeroProcesso);
     if (!casoEncontrado) return;
 
     if (confirm(`Deseja realmente EXCLUIR o caso ${numeroProcesso}?`)) {
-        // Remove localmente primeiro
+        // Remove localmente imediatamente da lista e da tela
         casos = casos.filter(c => (c.numeroProcesso || c.processo) !== numeroProcesso);
         renderTabelaCasos();
 
-        // Envia requisição ao servidor
+        // Tenta remover no servidor
         if (casoEncontrado.id) {
             try {
                 await fetch(`/api/casos/${casoEncontrado.id}`, { method: 'DELETE' });
@@ -236,8 +235,17 @@ async function salvarCaso(event) {
         return;
     }
 
+    // BLOQUEIO: Não permite cadastrar se já existir o mesmo protocolo
+    if (!modoEdicaoCaso) {
+        const jaExiste = casos.some(c => (c.numeroProcesso || c.processo) === numerosApenas);
+        if (jaExiste) {
+            mostrarErroCaso("Já existe um caso cadastrado (ativo ou encerrado) com este número de protocolo.");
+            return;
+        }
+    }
+
     // Preserva prazos existentes se estiver editando
-    const casoExistente = casos.find(c => (c.numeroProcesso || c.processo) === processoVal || c.id == casoIdVal);
+    const casoExistente = casos.find(c => (c.numeroProcesso || c.processo) === numerosApenas || c.id == casoIdVal);
     const prazosGuardados = casoExistente ? (casoExistente.prazos || []) : [];
 
     const payload = {
@@ -250,7 +258,7 @@ async function salvarCaso(event) {
         prazos: prazosGuardados
     };
 
-    // Atualiza/Adiciona localmente
+    // Atualiza ou Adiciona localmente
     const idx = casos.findIndex(c => (c.id && c.id == payload.id) || (c.numeroProcesso || c.processo) === payload.numeroProcesso);
     if (idx >= 0) {
         casos[idx] = payload;
@@ -349,7 +357,6 @@ function recalcularVencimentoAuto() {
     }
 }
 
-// CORREÇÃO 2: ABRIR MODAL DE PRAZOS (Não apaga os dados locais)
 async function abrirModalPrazos(numeroProcesso) {
     let casoEncontrado = casos.find(c => (c.numeroProcesso || c.processo) === numeroProcesso);
     
@@ -358,7 +365,6 @@ async function abrirModalPrazos(numeroProcesso) {
         return;
     }
 
-    // Garante que o caso tenha um ID (mesmo que temporário local)
     if (!casoEncontrado.id) {
         casoEncontrado.id = Date.now();
     }
@@ -376,6 +382,20 @@ async function abrirModalPrazos(numeroProcesso) {
 
     document.getElementById('modal-prazos').style.display = 'flex';
     limparFormularioPrazo();
+
+    // BLOQUEIO: Se o caso estiver encerrado, esconde o formulário de cadastrar novos prazos
+    const formPrazo = document.getElementById('form-prazo');
+    const isEncerrado = (casoEncontrado.status || '').toLowerCase() === 'encerrado';
+
+    if (isEncerrado) {
+        if (formPrazo) formPrazo.style.display = 'none';
+        mostrarErroPrazo(
+            "<strong>Aviso:</strong> Este caso está <strong>ENCERRADO</strong>. Não é possível cadastrar novos prazos.", 
+            "#fff3cd", "#856404", "#ffeeba"
+        );
+    } else {
+        if (formPrazo) formPrazo.style.display = 'block';
+    }
 
     await carregarPrazosDoCaso(casoEncontrado);
 }
@@ -404,7 +424,6 @@ function limparFormularioPrazo() {
 async function carregarPrazosDoCaso(caso) {
     prazos = caso.prazos || [];
 
-    // Tenta sincronizar do backend sem apagar a lista local se falhar ou vier vazia
     if (caso.id) {
         try {
             const resposta = await fetch(`/api/casos/${caso.id}/prazos`);
@@ -529,7 +548,6 @@ async function marcarPrazoComoCumprido(prazoId) {
     }
 }
 
-// CORREÇÃO 3: SALVAR PRAZO (Grava no objeto do caso local)
 async function salvarPrazo(e) {
     e.preventDefault();
 
@@ -543,6 +561,11 @@ async function salvarPrazo(e) {
     let casoEncontrado = casos.find(c => c.id === casoIdVal);
     if (!casoEncontrado) {
         mostrarErroPrazo("<strong>RN009:</strong> O prazo deve estar vinculado a um caso pericial existente.");
+        return;
+    }
+
+    if ((casoEncontrado.status || '').toLowerCase() === 'encerrado') {
+        mostrarErroPrazo("<strong>Erro:</strong> Não é permitido salvar prazos para um caso encerrado.");
         return;
     }
 
@@ -587,7 +610,6 @@ async function salvarPrazo(e) {
         historico: historicoAtualizado
     };
 
-    // Salva/Atualiza na lista interna do caso
     if (!casoEncontrado.prazos) casoEncontrado.prazos = [];
     
     const idx = casoEncontrado.prazos.findIndex(p => p.id === payloadPrazo.id);
@@ -599,7 +621,6 @@ async function salvarPrazo(e) {
 
     prazos = casoEncontrado.prazos;
 
-    // Tenta salvar no backend
     try {
         const urlDestino = prazoIdVal ? `/api/prazos/${prazoIdVal}` : '/api/prazos';
         const metodoHttp = prazoIdVal ? 'PUT' : 'POST';
