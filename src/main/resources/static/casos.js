@@ -6,27 +6,23 @@ let modoEdicao = false;
 let processoSendoEditado = "";
 let statusSendoEditado = "ativo";
 
-// Inicializa a aplicação assim que o DOM estiver carregado
+// Inicializa os eventos da aplicação quando o DOM estiver pronto
 document.addEventListener('DOMContentLoaded', () => {
-    // Configura a máscara do número de processo (CNJ)
     const inputProcesso = document.getElementById('processo');
     if (inputProcesso) {
         inputProcesso.addEventListener('input', aplicarMascaraCNJ);
     }
 
-    // Evento de envio do formulário de caso
     const formCaso = document.getElementById('form-caso');
     if (formCaso) {
         formCaso.addEventListener('submit', salvarCaso);
     }
 
-    // Evento de envio do formulário de prazos
     const formPrazo = document.getElementById('form-prazo');
     if (formPrazo) {
         formPrazo.addEventListener('submit', salvarPrazo);
     }
 
-    // Carrega a listagem do servidor
     carregarCasosDoServidor();
 });
 
@@ -70,7 +66,6 @@ function renderTabela() {
         const badgeClass = caso.status === 'ativo' ? 'badge-ativo' : 'badge-encerrado';
         const textoStatus = caso.status === 'ativo' ? 'Ativo' : 'Encerrado';
 
-        // Botões de ação
         let acoesHTML = `
             <a href="#" class="link-acao" style="color: #17a2b8;" onclick="abrirModalPrazos('${numProcesso}')">Prazos</a>
             <a href="#" class="link-acao" onclick="editarCaso('${numProcesso}')">Editar</a>
@@ -87,7 +82,7 @@ function renderTabela() {
             <td>${numProcesso}</td>
             <td>${caso.tipo}</td>
             <td><span class="badge ${badgeClass}">${textoStatus}</span></td>
-            <td><div class="acoes-container">${acoesHTML}</div></td>
+            <td class="acoes-container">${acoesHTML}</td>
         `;
         tbody.prepend(tr);
     });
@@ -259,4 +254,107 @@ async function salvarCaso(event) {
 
 function mostrarErro(mensagem) {
     document.getElementById('modal-erro').innerHTML = `
-        <div class="erro-box" style="background-color: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 15px; border-radius:
+        <div class="erro-box" style="background-color: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #f5c6cb;">
+            ${mensagem}
+        </div>
+    `;
+}
+
+function filtrarTabela() {
+    let input = document.getElementById("pesquisaCaso");
+    let filter = input.value.toUpperCase();
+    let table = document.getElementById("tabelaCasos");
+    let tr = table.getElementsByTagName("tr");
+
+    for (let i = 1; i < tr.length; i++) {
+        if (tr[i].id === "mensagem-vazio") continue;
+        let tdProcesso = tr[i].getElementsByTagName("td")[0];
+        let tdTipo = tr[i].getElementsByTagName("td")[1];
+        if (tdProcesso || tdTipo) {
+            let txtValueProcesso = tdProcesso.textContent || tdProcesso.innerText;
+            let txtValueTipo = tdTipo.textContent || tdTipo.innerText;
+            if (txtValueProcesso.toUpperCase().indexOf(filter) > -1 || txtValueTipo.toUpperCase().indexOf(filter) > -1) {
+                tr[i].style.display = "";
+            } else {
+                tr[i].style.display = "none";
+            }
+        }
+    }
+}
+
+async function excluirCaso(numeroProcesso) {
+    let casoEncontrado = casos.find(c => (c.numeroProcesso || c.processo) === numeroProcesso);
+    if (!casoEncontrado) return;
+
+    if (confirm(`Atenção: Deseja realmente EXCLUIR o caso ${numeroProcesso}?\nEle será ocultado da listagem, mas mantido em histórico.`)) {
+        try {
+            if (casoEncontrado.id) {
+                const resposta = await fetch(`/api/casos/${casoEncontrado.id}`, { method: 'DELETE' });
+                if (!resposta.ok) {
+                    alert("Erro ao excluir o caso no servidor.");
+                    return;
+                }
+            }
+            carregarCasosDoServidor();
+        } catch (erro) {
+            console.error("Erro de conexão ao excluir:", erro);
+        }
+    }
+}
+
+// ==========================================
+// MÓDULO DE CONTROLE DE PRAZOS
+// ==========================================
+function abrirModalPrazos(numeroProcesso) {
+    let casoEncontrado = casos.find(c => (c.numeroProcesso || c.processo) === numeroProcesso);
+    if (!casoEncontrado) return;
+
+    document.getElementById('casoIdParaPrazo').value = casoEncontrado.id || '';
+    document.getElementById('titulo-modal-prazos').innerText = `Prazos - Proc: ${numeroProcesso}`;
+    
+    const hoje = new Date().toISOString().split('T')[0];
+    document.getElementById('dataVencimento').setAttribute('min', hoje);
+
+    document.getElementById('modal-prazos').style.display = 'flex';
+    renderListaPrazosMock();
+}
+
+function fecharModalPrazos() {
+    document.getElementById('modal-prazos').style.display = 'none';
+    const form = document.getElementById('form-prazo');
+    if (form) form.reset();
+}
+
+function renderListaPrazosMock() {
+    const tbody = document.getElementById('tabela-corpo-prazos');
+    if (!tbody) return;
+
+    tbody.innerHTML = `
+        <tr>
+            <td style="padding: 8px; font-size: 14px;">Entregar Laudo</td>
+            <td style="padding: 8px; font-size: 14px;">15/11/2026</td>
+            <td style="padding: 8px;"><span class="badge badge-ativo" style="font-size: 11px;">Pendente</span></td>
+            <td style="padding: 8px;">
+                <a href="#" class="link-acao" style="color: #28a745; font-size: 13px;">✔ Cumprir</a>
+                <a href="#" class="link-acao" style="font-size: 13px;">✏ Editar</a>
+            </td>
+        </tr>
+    `;
+}
+
+function salvarPrazo(e) {
+    e.preventDefault();
+    
+    const payloadPrazo = {
+        casoId: parseInt(document.getElementById('casoIdParaPrazo').value) || null,
+        descricao: document.getElementById('descPrazo').value,
+        dataVencimento: document.getElementById('dataVencimento').value,
+        tipoContagem: document.getElementById('tipoContagem').value
+    };
+
+    console.log("JSON pronto para o Backend:", payloadPrazo);
+    alert("Dados do prazo preparados com sucesso! Verifique a consola (F12) para ver o JSON.");
+    
+    const form = document.getElementById('form-prazo');
+    if (form) form.reset();
+}
