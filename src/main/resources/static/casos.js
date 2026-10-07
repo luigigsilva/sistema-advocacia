@@ -390,7 +390,7 @@ async function abrirModalPrazos(numeroProcesso) {
     if (isEncerrado) {
         if (formPrazo) formPrazo.style.display = 'none';
         mostrarErroPrazo(
-            "<strong>Aviso:</strong> Este caso está <strong>ENCERRADO</strong>. Não é possível cadastrar novos prazos.", 
+            "<strong>Aviso:</strong> Este caso está <strong>ENCERRADO</strong>. O histórico está disponível apenas para consulta.", 
             "#fff3cd", "#856404", "#ffeeba"
         );
     } else {
@@ -458,6 +458,11 @@ function renderTabelaPrazos() {
         return;
     }
 
+    // Verifica se o caso vinculado está encerrado
+    const casoIdVal = document.getElementById('casoIdParaPrazo')?.value;
+    const casoAtual = casos.find(c => c.id == casoIdVal);
+    const isCasoEncerrado = casoAtual && (casoAtual.status || '').toLowerCase() === 'encerrado';
+
     prazos.forEach(prazo => {
         const tr = document.createElement('tr');
         const isCumprido = (prazo.status || '').toLowerCase() === 'cumprido';
@@ -471,7 +476,8 @@ function renderTabelaPrazos() {
         const dataFormatada = partesData.length === 3 ? `${partesData[2]}/${partesData[1]}/${partesData[0]}` : prazo.dataVencimento;
 
         let acoesHTML = '';
-        if (isCumprido) {
+        // Permite editar/cumprir apenas se o prazo NÃO foi cumprido E o caso NÃO está encerrado
+        if (isCumprido || isCasoEncerrado) {
             acoesHTML = `<a href="#" class="link-acao" style="color: #17a2b8;" onclick="consultarPrazo(${prazo.id})">👁 Consultar</a>`;
         } else {
             acoesHTML = `
@@ -509,7 +515,7 @@ function consultarPrazo(prazoId) {
     const btnSalvar = document.getElementById('btn-salvar-prazo');
     if (btnSalvar) btnSalvar.style.display = "none";
 
-    mostrarErroPrazo(`<strong>Modo Consulta (RN013):</strong> Prazo cumprido não pode ser editado.`, "#d1ecf1", "#0c5460", "#bee5eb");
+    mostrarErroPrazo(`<strong>Modo Consulta (RN013):</strong> Prazo indisponível para alterações.`, "#d1ecf1", "#0c5460", "#bee5eb");
 }
 
 function carregarPrazoParaEdicao(prazoId) {
