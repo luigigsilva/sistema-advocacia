@@ -81,17 +81,16 @@
     </div>
 </div>
 
-<!-- Modal: Controle de Prazos -->
+<!-- Modal: Controle de Prazos (RF009, RF018, RN009, RN014) -->
 <div id="modal-prazos" class="modal">
     <div class="modal-content modal-prazos-content">
         <button type="button" class="btn-fechar-modal" onclick="fecharModalPrazos()">&times;</button>
         <h2 id="titulo-modal-prazos">Prazos do Processo</h2>
         
-        <!-- ID ajustado para bater com o JavaScript -->
         <div id="modal-prazo-erro"></div>
 
         <form id="form-prazo" class="form-prazos-container">
-            <!-- Inputs Ocultos de Controle -->
+            <!-- Inputs Ocultos -->
             <input type="hidden" id="casoIdParaPrazo">
             <input type="hidden" id="prazoId">
 
@@ -102,16 +101,21 @@
 
             <div class="form-row">
                 <div class="input-group form-col">
-                    <label for="dataVencimento">Data de Vencimento *</label>
-                    <input type="date" id="dataVencimento" required>
+                    <label for="diasPrazo">Prazo (em Dias)</label>
+                    <input type="number" id="diasPrazo" min="1" placeholder="Ex: 15">
                 </div>
+
                 <div class="input-group form-col">
                     <label for="tipoContagem">Contagem *</label>
-                    <!-- Valores ajustados para bater com as regras do JS -->
                     <select id="tipoContagem" required>
-                        <option value="corridos">Dias Corridos</option>
-                        <option value="uteis">Dias Úteis</option>
+                        <option value="DIAS_UTEIS">Dias Úteis</option>
+                        <option value="DIAS_CORRIDOS">Dias Corridos</option>
                     </select>
+                </div>
+
+                <div class="input-group form-col">
+                    <label for="dataVencimento">Vencimento *</label>
+                    <input type="date" id="dataVencimento" required>
                 </div>
             </div>
 
