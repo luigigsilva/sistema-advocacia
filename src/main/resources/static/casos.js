@@ -2,7 +2,6 @@
 // FUNÇÕES AUXILIARES (CNJ, DATAS E STATUS)
 // ==========================================
 
-// Corrigi o Ponto 1: Formatação CNJ para exibição limpa na interface
 function formatarCNJ(numero) {
     if (!numero) return '';
     const limpo = String(numero).replace(/\D/g, '');
@@ -10,12 +9,16 @@ function formatarCNJ(numero) {
     return limpo.replace(/(\d{7})(\d{2})(\d{4})(\d{1})(\d{2})(\d{4})/, '$1-$2.$3.$4.$5.$6');
 }
 
-// Corrigi o Ponto 2: Formatação de data respeitando o fuso horário local (evita bug das 21h do UTC)
+// Corrigi o Ponto 1: Trata strings YYYY-MM-DD diretamente sem passar pelo new Date(UTC), evitando a perda de 1 dia pelo fuso BR (UTC-3)
 function formatarDataLocal(data = new Date()) {
-    const d = new Date(data);
-    const ano = d.getFullYear();
-    const mes = String(d.getMonth() + 1).padStart(2, '0');
-    const dia = String(d.getDate()).padStart(2, '0');
+    if (typeof data === 'string') {
+        const apenasData = data.split('T')[0];
+        if (/^\d{4}-\d{2}-\d{2}$/.test(apenasData)) return apenasData;
+        data = new Date(data);
+    }
+    const ano = data.getFullYear();
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const dia = String(data.getDate()).padStart(2, '0');
     return `${ano}-${mes}-${dia}`;
 }
 
@@ -45,7 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
         formPrazo.addEventListener('submit', salvarPrazo);
     }
 
-    // RN014/RF018: Eventos para cálculo automático do vencimento
     const inputDias = document.getElementById('diasPrazo');
     const selectContagem = document.getElementById('tipoContagem');
     if (inputDias) inputDias.addEventListener('input', recalcularVencimentoAuto);
@@ -64,7 +66,7 @@ async function carregarCasosDoServidor() {
             const dados = await resposta.json();
             casos = dados.map(cServidor => {
                 const casoExistente = casos.find(c => 
-                    c.id === cServidor.id || 
+                    c.id == cServidor.id || 
                     (c.numeroProcesso || c.processo) === (cServidor.numeroProcesso || cServidor.processo)
                 );
                 return {
@@ -104,7 +106,6 @@ function renderTabelaCasos() {
         const numProcessoLimpo = (caso.numeroProcesso || caso.processo || '').replace(/\D/g, '');
         const numProcessoFormatado = formatarCNJ(numProcessoLimpo);
         
-        // Corrigi o Ponto 5: Tratamento de status insensível a caixa (ATIVO / ATIVO vs ativo)
         const statusAtual = (caso.status || 'ATIVO').toUpperCase();
         const badgeClass = statusAtual === 'ATIVO' ? 'badge-ativo' : 'badge-encerrado';
         const textoStatus = statusAtual === 'ATIVO' ? 'Ativo' : 'Encerrado';
@@ -274,7 +275,6 @@ async function salvarCaso(event) {
     const casoExistente = casos.find(c => (c.numeroProcesso || c.processo || '').replace(/\D/g, '') === numerosApenas || c.id == casoIdVal);
     const prazosGuardados = casoExistente ? (casoExistente.prazos || []) : [];
 
-    // Corrigi o Ponto 5: Status enviado sempre em CAIXA ALTA para compatibilidade com Enums no Java
     const payload = {
         id: casoIdVal ? parseInt(casoIdVal) : Date.now(),
         tipo: tipoVal,
@@ -345,7 +345,6 @@ function filtrarTabela() {
 function calcularVencimento(dataInicioISO, quantidadeDias, tipoContagem) {
     if (!dataInicioISO || isNaN(quantidadeDias) || quantidadeDias <= 0) return '';
     
-    // Converte mantendo a data local sem desvio do fuso horário
     const partes = dataInicioISO.split('T')[0].split('-');
     let data = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
     
@@ -368,7 +367,6 @@ function calcularVencimento(dataInicioISO, quantidadeDias, tipoContagem) {
     return formatarDataLocal(data);
 }
 
-// Corrigi o Ponto 3: Pega a data original de cadastro ao editar/prorrogar
 function recalcularVencimentoAuto() {
     const elDias = document.getElementById('diasPrazo');
     const elContagem = document.getElementById('tipoContagem');
@@ -379,7 +377,6 @@ function recalcularVencimentoAuto() {
     const qtdDias = parseInt(elDias.value);
     const tipoContagem = elContagem.value;
     
-    // Se estiver editando, usa a data de cadastro original. Senão, usa a data atual local.
     const dataInicioRef = (prazoEmEdicao && prazoEmEdicao.dataCadastro) 
         ? prazoEmEdicao.dataCadastro.split('T')[0] 
         : formatarDataLocal(new Date());
@@ -408,10 +405,6 @@ async function abrirModalPrazos(numeroProcesso) {
 
     document.getElementById('casoIdParaPrazo').value = casoEncontrado.id;
     document.getElementById('titulo-modal-prazos').innerText = `Prazos - Proc: ${formatarCNJ(numLimpo)}`;
-    
-    const hoje = formatarDataLocal(new Date());
-    const elVencimento = document.getElementById('dataVencimento');
-    if (elVencimento) elVencimento.setAttribute('min', hoje);
 
     document.getElementById('modal-prazos').style.display = 'flex';
     limparFormularioPrazo();
@@ -437,10 +430,14 @@ function fecharModalPrazos() {
     limparFormularioPrazo();
 }
 
+// Corrigi o Ponto 4: Restaura a visibilidade do formulário por padrão ao limpar
 function limparFormularioPrazo() {
     prazoEmEdicao = null;
     const form = document.getElementById('form-prazo');
-    if (form) form.reset();
+    if (form) {
+        form.reset();
+        form.style.display = 'block';
+    }
 
     document.getElementById('prazoId').value = '';
     const btnSalvar = document.getElementById('btn-salvar-prazo');
@@ -536,11 +533,10 @@ function renderTabelaPrazos() {
     });
 }
 
-// Corrigi o Ponto 6: Limpa o formulário e remove 'min' para evitar resíduos ao consultar
 function consultarPrazo(prazoId) {
     limparFormularioPrazo();
 
-    const prazo = prazos.find(p => p.id === prazoId);
+    const prazo = prazos.find(p => p.id == prazoId);
     if (!prazo) return;
 
     prazoEmEdicao = prazo;
@@ -561,8 +557,9 @@ function consultarPrazo(prazoId) {
     mostrarErroPrazo(`<strong>Modo Consulta (RN013):</strong> Prazo indisponível para alterações.`, "#d1ecf1", "#0c5460", "#bee5eb");
 }
 
+// Corrigi o Ponto 2: Atualiza o atributo min para a data de cadastro do prazo para evitar bloqueios do HTML5 na edição
 function carregarPrazoParaEdicao(prazoId) {
-    const prazo = prazos.find(p => p.id === prazoId);
+    const prazo = prazos.find(p => p.id == prazoId);
     if (!prazo) return;
 
     if ((prazo.status || '').toUpperCase() === 'CUMPRIDO') {
@@ -572,6 +569,13 @@ function carregarPrazoParaEdicao(prazoId) {
 
     limparFormularioPrazo();
     prazoEmEdicao = prazo;
+
+    const elVencimento = document.getElementById('dataVencimento');
+    if (elVencimento && prazo.dataCadastro) {
+        elVencimento.setAttribute('min', prazo.dataCadastro.split('T')[0]);
+    } else if (elVencimento) {
+        elVencimento.removeAttribute('min');
+    }
 
     document.getElementById('prazoId').value = prazo.id;
     document.getElementById('descPrazo').value = prazo.descricao || '';
@@ -584,7 +588,7 @@ function carregarPrazoParaEdicao(prazoId) {
 }
 
 async function marcarPrazoComoCumprido(prazoId) {
-    const prazo = prazos.find(p => p.id === prazoId);
+    const prazo = prazos.find(p => p.id == prazoId);
     if (!prazo) return;
 
     if (confirm(`Deseja marcar o prazo "${prazo.descricao}" como CUMPRIDO?`)) {
@@ -600,14 +604,15 @@ async function marcarPrazoComoCumprido(prazoId) {
 async function salvarPrazo(e) {
     e.preventDefault();
 
-    const casoIdVal = parseInt(document.getElementById('casoIdParaPrazo').value);
+    const casoIdVal = document.getElementById('casoIdParaPrazo').value;
     const descVal = document.getElementById('descPrazo').value.trim();
     const dataVencimentoVal = document.getElementById('dataVencimento').value;
     const tipoContagemVal = document.getElementById('tipoContagem').value;
     const diasVal = document.getElementById('diasPrazo').value;
     const prazoIdVal = document.getElementById('prazoId').value;
 
-    let casoEncontrado = casos.find(c => c.id === casoIdVal);
+    // Corrigi o Ponto 3: Uso de comparação não-estrita (==) para englobar ID numérico ou string vindo do backend
+    let casoEncontrado = casos.find(c => c.id == casoIdVal);
     if (!casoEncontrado) {
         mostrarErroPrazo("<strong>RN009:</strong> O prazo deve estar vinculado a um caso pericial existente.");
         return;
@@ -630,7 +635,6 @@ async function salvarPrazo(e) {
 
     const hojeStr = formatarDataLocal(new Date());
     
-    // Corrigi o Ponto 4: Trata ISO com .split('T')[0] evitando erros de string do backend Java
     const dataCadastroRef = (prazoEmEdicao && prazoEmEdicao.dataCadastro) 
         ? prazoEmEdicao.dataCadastro.split('T')[0] 
         : hojeStr;
@@ -653,8 +657,8 @@ async function salvarPrazo(e) {
 
     const payloadPrazo = {
         id: prazoIdVal ? parseInt(prazoIdVal) : Date.now(),
-        caso: { id: casoIdVal },
-        casoId: casoIdVal,
+        caso: { id: parseInt(casoIdVal) },
+        casoId: parseInt(casoIdVal),
         descricao: descVal,
         dias: diasVal ? parseInt(diasVal) : null,
         dataVencimento: dataVencimentoVal,
@@ -667,7 +671,7 @@ async function salvarPrazo(e) {
 
     if (!casoEncontrado.prazos) casoEncontrado.prazos = [];
     
-    const idx = casoEncontrado.prazos.findIndex(p => p.id === payloadPrazo.id);
+    const idx = casoEncontrado.prazos.findIndex(p => p.id == payloadPrazo.id);
     if (idx >= 0) {
         casoEncontrado.prazos[idx] = payloadPrazo;
     } else {
@@ -689,7 +693,7 @@ async function salvarPrazo(e) {
         if (resposta.ok) {
             const prazoBackend = await resposta.json();
             if (prazoBackend && prazoBackend.id) {
-                const pos = casoEncontrado.prazos.findIndex(p => p.id === payloadPrazo.id);
+                const pos = casoEncontrado.prazos.findIndex(p => p.id == payloadPrazo.id);
                 if (pos >= 0) casoEncontrado.prazos[pos] = prazoBackend;
             }
         }
