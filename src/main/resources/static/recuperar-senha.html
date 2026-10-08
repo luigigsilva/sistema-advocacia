@@ -1,86 +1,130 @@
-<script>
-    var temporizador = null;
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperar Senha - Advocacia</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-    document.getElementById('form-recuperar').addEventListener('submit', async function(event) {
-        event.preventDefault(); // Impede o envio padrão
+    <div class="card-container">
+        <h2>Recuperar Senha</h2>
 
-        var emailInput = document.getElementById('email-recuperacao').value.trim().toLowerCase();
-        var msgErro = document.getElementById('msg-erro');
-        var btnEnviar = document.getElementById('btn-enviar');
-        var textoReenviar = document.getElementById('texto-reenviar');
-        var spanContador = document.getElementById('contador');
+        <p style="font-size: 13px; color: #666; margin-bottom: 20px;">
+            Informe o seu e-mail cadastrado para receber o link de redefinição de senha.
+        </p>
 
-        // 1. Validação de formato
-        var regexEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        if (!regexEmail.test(emailInput)) {
-            msgErro.innerHTML = 'Por favor, insira um e-mail completo com @ e ponto (ex: .com).';
-            msgErro.style.display = 'block';
-            return;
-        }
+        <!-- Mensagem de erro (Vermelha) -->
+        <div id="msg-erro" style="display: none; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; font-size: 12px; margin-bottom: 15px;"></div>
 
-        let possuiCadastro = false;
+        <!-- Mensagem de sucesso (Verde) -->
+        <div id="msg-sucesso" style="display: none; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 10px; border-radius: 4px; font-size: 12px; margin-bottom: 15px;"></div>
 
-        // 2. Consulta ao Servidor/Banco de Dados no Railway
-        try {
-            // Caso o frontend esteja hospedado separado do Railway, coloque a URL completa:
-            // ex: 'https://seu-app.up.railway.app/api/verificar-email'
-            const resposta = await fetch('/api/verificar-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: emailInput })
-            });
+        <form id="form-recuperar" action="login.html" method="GET">
+            <div class="input-group">
+                <label for="email-recuperacao">E-mail</label>
+                <input 
+                    type="email" 
+                    id="email-recuperacao" 
+                    name="email" 
+                    required 
+                    placeholder="seuemail@exemplo.com"
+                >
+            </div>
 
-            if (resposta.ok) {
-                const dados = await resposta.json();
-                // O backend do Railway deve retornar algo como { existe: true } ou { existe: false }
-                possuiCadastro = Boolean(dados.existe);
+            <button type="submit" id="btn-enviar" class="btn-entrar">Enviar Link</button>
+
+            <!-- Texto Reenviar posicionado abaixo do botão -->
+            <div style="text-align: center; margin-top: 12px;">
+                <span id="texto-reenviar" style="display: none; font-size: 12px; color: #777777; font-weight: 500;">
+                    Reenviar (<span id="contador">30</span>s)
+                </span>
+            </div>
+        </form>
+
+        <p><a href="login.html">Voltar para o Login</a></p>
+    </div>
+
+    <script>
+        var temporizador = null;
+
+        document.getElementById('form-recuperar').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Impede o envio padrao do HTML para processar a validacao
+
+            var emailInput = document.getElementById('email-recuperacao').value.trim().toLowerCase();
+            var msgErro = document.getElementById('msg-erro');
+            var msgSucesso = document.getElementById('msg-sucesso');
+            var btnEnviar = document.getElementById('btn-enviar');
+            var textoReenviar = document.getElementById('texto-reenviar');
+            var spanContador = document.getElementById('contador');
+
+            // Limpa mensagens anteriores
+            msgErro.style.display = 'none';
+            msgSucesso.style.display = 'none';
+
+            // 1. Validação do formato do e-mail
+            var regexEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!regexEmail.test(emailInput)) {
+                msgErro.innerHTML = 'Por favor, insira um e-mail completo com @ e ponto (ex: .com).';
+                msgErro.style.display = 'block';
+                return;
             }
-        } catch (erro) {
-            console.warn('Backend no Railway offline ou inacessível. Tentando verificação local...', erro);
-            
-            // Verificação alternativa no LocalStorage caso o backend falhe
-            var usuariosSalvos = JSON.parse(localStorage.getItem('usuarios')) || [];
-            possuiCadastro = usuariosSalvos.some(function(u) {
-                var email = typeof u === 'string' ? u : (u && u.email);
-                return email && email.toLowerCase() === emailInput;
-            });
-        }
 
-        // 3. Exibe erro se a conta não existir no Railway
-        if (!possuiCadastro) {
-            msgErro.innerHTML = 'Esta conta não existe.';
-            msgErro.style.display = 'block';
-            return;
-        }
+            let possuiCadastro = false;
 
-        // 4. Se a conta existir, oculta erros e ativa o temporizador
-        msgErro.style.display = 'none';
+            // 2. Consulta ao Banco no Railway / API (com fallback local caso esteja offline)
+            try {
+                const resposta = await fetch('/api/verificar-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: emailInput })
+                });
 
-        btnEnviar.textContent = 'Link enviado';
-        btnEnviar.disabled = true;
-        btnEnviar.style.backgroundColor = '#888888';
-        btnEnviar.style.cursor = 'not-allowed';
-
-        var tempoRestante = 30;
-        spanContador.textContent = tempoRestante;
-        textoReenviar.style.display = 'inline-block';
-
-        if (temporizador) clearInterval(temporizador);
-
-        temporizador = setInterval(function() {
-            tempoRestante--;
-            spanContador.textContent = tempoRestante;
-
-            if (tempoRestante <= 0) {
-                clearInterval(temporizador);
-                
-                btnEnviar.textContent = 'Enviar Link';
-                btnEnviar.disabled = false;
-                btnEnviar.style.backgroundColor = '#2c2c2c';
-                btnEnviar.style.cursor = 'pointer';
-
-                textoReenviar.style.display = 'none';
+                if (resposta.ok) {
+                    const dados = await resposta.json();
+                    possuiCadastro = Boolean(dados.existe);
+                }
+            } catch (erro) {
+                var usuariosSalvos = JSON.parse(localStorage.getItem('usuarios')) || [];
+                possuiCadastro = usuariosSalvos.some(function(u) {
+                    var email = typeof u === 'string' ? u : (u && u.email);
+                    return email && email.toLowerCase() === emailInput;
+                });
             }
-        }, 1000);
-    });
-</script>
+
+            // 3. Se a conta não existir
+            if (!possuiCadastro) {
+                msgErro.innerHTML = 'Esta conta não existe.';
+                msgErro.style.display = 'block';
+                return;
+            }
+
+            // 4. Se a conta existir: Envia a requisição e exibe confirmação
+            try {
+                await fetch('/api/recuperar-senha', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: emailInput })
+                });
+            } catch (e) {
+                console.log('Solicitação enviada localmente.');
+            }
+
+            msgSucesso.innerHTML = 'Link enviado com sucesso! Redirecionando para o login...';
+            msgSucesso.style.display = 'block';
+
+            btnEnviar.textContent = 'Link enviado';
+            btnEnviar.disabled = true;
+            btnEnviar.style.backgroundColor = '#888888';
+            btnEnviar.style.cursor = 'not-allowed';
+
+            // 5. Redireciona para login.html após 3 segundos
+            setTimeout(function() {
+                window.location.href = 'login.html';
+            }, 3000);
+        });
+    </script>
+
+</body>
+</html>
