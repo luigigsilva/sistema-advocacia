@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
+//O CasoRepositorio realiza operações no banco de dados dos casos,
+//permitindo buscar casos de um usuário, ignorar casos excluídos e verificar se um processo já está cadastrado.
 public interface CasoRepositorio extends JpaRepository<Caso, Long> {
 
     // Regra RN5: Retorna exclusivamente os casos do usuário informado

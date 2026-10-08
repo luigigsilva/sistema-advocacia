@@ -9,6 +9,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+//O UsuarioServico cuida da criação, busca e segurança dos usuários,
+//criptografando suas senhas com BCrypt e buscando usuários pelo e-mail durante o login.
+
 // Aplica as regras de negócio RN001 e RF001 (validação de e-mail duplicado e criptografia de senha).
 @Service
 public class UsuarioServico implements UserDetailsService {

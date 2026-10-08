@@ -10,7 +10,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 
 
-// CONTROLADORA WEB: Conecta as requisições dos formulários ao serviço do Java.
+// O AuthController gerencia as rotas de autenticação e acesso, permitindo cadastrar usuários,
+//realizar login e consultar os dados do usuário atualmente logado.
 @Controller
 public class AuthController {
 

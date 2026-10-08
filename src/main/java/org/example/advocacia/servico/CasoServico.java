@@ -14,6 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 
+//O CasoServico aplica as regras e validações dos casos jurídicos, controlando cadastros, edições e históricos.
+//Ele verifica processos duplicados, define a data de abertura, controla permissões de edição,
+//registra alterações no histórico e impede modificações em casos encerrados.
 @Service
 public class CasoServico {
 

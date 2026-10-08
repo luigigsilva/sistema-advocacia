@@ -6,14 +6,14 @@ function formatarCNJ(numero) {
     if (!numero) return '';
     const limpo = String(numero).replace(/\D/g, '');
     if (limpo.length !== 20) return numero;
-    return limpo.replace(/(\d{7})(\d{2})(\d{4})(\d{1})(\d{2})(\d{4})/, '$1-$2.$3.$4.$5.$6');
+    return limpo.replace(/(\d{7})(\d{2})(\d{4})(\d{1})(\d{2})(\d{4})/, '\$1-\$2.\$3.\$4.\$5.\$6');
 }
 
 // Trata datas locais sem perdas de 1 dia pelo fuso BR (UTC-3)
 function formatarDataLocal(data = new Date()) {
     if (typeof data === 'string') {
         const apenasData = data.split('T')[0];
-        if (/^\d{4}-\d{2}-\d{2}$/.test(apenasData)) return apenasData;
+        if (/^\d{4}-\d{2}-\d{2}\$/.test(apenasData)) return apenasData;
         data = new Date(data);
     }
     const ano = data.getFullYear();
@@ -25,7 +25,7 @@ function formatarDataLocal(data = new Date()) {
 // Converte IDs de forma segura (previne NaN com UUIDs ou Strings do backend)
 function converterIdSeguro(id) {
     if (id === null || id === undefined || id === '') return null;
-    return /^\d+$/.test(String(id)) ? parseInt(id, 10) : String(id);
+    return /^\d+\$/.test(String(id)) ? parseInt(id, 10) : String(id);
 }
 
 // Sanitiza strings para prevenir vulnerabilidades de DOM XSS
@@ -85,7 +85,7 @@ async function carregarCasosDoServidor() {
             if (Array.isArray(dados)) {
                 const idsBackend = new Set(dados.map(d => String(d.id)));
                 const cnjsBackend = new Set(dados.map(d => (d.numeroProcesso || d.processo || '').replace(/\D/g, '')));
-                
+
                 // Mantém casos locais apenas se não existirem no servidor nem por ID nem por CNJ
                 const casosLocaisNaoSincronizados = casos.filter(c => {
                     const cnjLocal = (c.numeroProcesso || c.processo || '').replace(/\D/g, '');
@@ -94,11 +94,11 @@ async function carregarCasosDoServidor() {
 
                 casos = [
                     ...dados.map(cServidor => {
-                        const casoExistente = casos.find(c => 
-                            String(c.id) === String(cServidor.id) || 
+                        const casoExistente = casos.find(c =>
+                            String(c.id) === String(cServidor.id) ||
                             (c.numeroProcesso || c.processo || '').replace(/\D/g, '') === (cServidor.numeroProcesso || cServidor.processo || '').replace(/\D/g, '')
                         );
-                        
+
                         const prazosServidor = Array.isArray(cServidor.prazos) && cServidor.prazos.length > 0 ? cServidor.prazos : null;
                         const prazosLocais = casoExistente ? casoExistente.prazos : [];
 
@@ -141,7 +141,7 @@ function renderTabelaCasos() {
         const tr = document.createElement('tr');
         const numProcessoLimpo = (caso.numeroProcesso || caso.processo || '').replace(/\D/g, '');
         const numProcessoFormatado = formatarCNJ(numProcessoLimpo);
-        
+
         const statusAtual = (caso.status || 'ATIVO').toUpperCase();
         const badgeClass = statusAtual === 'ATIVO' ? 'badge-ativo' : 'badge-encerrado';
         const textoStatus = statusAtual === 'ATIVO' ? 'Ativo' : 'Encerrado';
@@ -192,7 +192,7 @@ function limparFormularioCaso() {
     if (modalErro) modalErro.innerHTML = '';
 
     document.querySelectorAll('#form-caso input, #form-caso select, #form-caso textarea').forEach(el => el.disabled = false);
-    
+
     const btnSalvar = document.getElementById('btn-salvar');
     if (btnSalvar) {
         btnSalvar.style.display = 'block';
@@ -244,10 +244,10 @@ function consultarCaso(numeroProcesso) {
     editarCaso(numeroProcesso);
     document.getElementById('titulo-modal').innerText = 'Consultar Caso';
     document.querySelectorAll('#form-caso input, #form-caso select, #form-caso textarea').forEach(el => el.disabled = true);
-    
+
     const btnSalvar = document.getElementById('btn-salvar');
     if (btnSalvar) btnSalvar.style.display = 'none';
-    
+
     document.getElementById('modal-erro').innerHTML = '';
 }
 
@@ -308,9 +308,9 @@ async function salvarCaso(event) {
         const cNum = (c.numeroProcesso || c.processo || '').replace(/\D/g, '');
         const cId = c.id ? String(c.id) : null;
         const idAtual = casoIdVal ? String(casoIdVal) : null;
-        
+
         if (idAtual && cId === idAtual) return false;
-        
+
         return cNum === numerosApenas;
     });
 
@@ -319,30 +319,40 @@ async function salvarCaso(event) {
         return;
     }
 
-    const casoExistente = casoIdVal 
+    const casoExistente = casoIdVal
         ? casos.find(c => String(c.id) === String(casoIdVal))
         : casos.find(c => (c.numeroProcesso || c.processo || '').replace(/\D/g, '') === numerosApenas);
 
     const prazosGuardados = casoExistente ? (casoExistente.prazos || []) : [];
 
-    const payload = {
-        id: casoIdVal ? converterIdSeguro(casoIdVal) : Date.now(),
+    // Objeto enviado para o Back-end (NÃO envia id no POST para permitir o INSERT do PostgreSQL)
+    const payloadBackend = {
         tipo: tipoVal,
         numeroProcesso: numerosApenas,
         descricao: descricaoVal,
         dataAbertura: dataAberturaVal,
-        status: modoEdicaoCaso ? statusSendoEditado.toUpperCase() : 'ATIVO',
+        status: modoEdicaoCaso ? statusSendoEditado.toUpperCase() : 'ATIVO'
+    };
+
+    if (modoEdicaoCaso && casoIdVal) {
+        payloadBackend.id = converterIdSeguro(casoIdVal);
+    }
+
+    // Objeto local para atualização imediata na interface
+    const payloadLocal = {
+        ...payloadBackend,
+        id: casoIdVal ? converterIdSeguro(casoIdVal) : Date.now(),
         prazos: prazosGuardados
     };
 
     const idx = (modoEdicaoCaso && casoIdVal)
-        ? casos.findIndex(c => String(c.id) === String(payload.id))
-        : casos.findIndex(c => (c.numeroProcesso || c.processo || '').replace(/\D/g, '') === payload.numeroProcesso);
+        ? casos.findIndex(c => String(c.id) === String(casoIdVal))
+        : casos.findIndex(c => (c.numeroProcesso || c.processo || '').replace(/\D/g, '') === payloadBackend.numeroProcesso);
 
     if (idx >= 0) {
-        casos[idx] = payload;
+        casos[idx] = payloadLocal;
     } else {
-        casos.push(payload);
+        casos.push(payloadLocal);
     }
 
     fecharModal();
@@ -355,20 +365,24 @@ async function salvarCaso(event) {
         const resposta = await fetch(urlDestino, {
             method: metodoHttp,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payloadBackend)
         });
 
         if (resposta.ok) {
             const casoServidor = await resposta.json();
             if (casoServidor && casoServidor.id) {
                 const idServidorSeguro = converterIdSeguro(casoServidor.id);
-                payload.id = idServidorSeguro;
 
-                if (payload.prazos && payload.prazos.length > 0) {
-                    payload.prazos.forEach(p => {
-                        p.casoId = idServidorSeguro;
-                        if (p.caso) p.caso.id = idServidorSeguro;
-                    });
+                const idxLocal = casos.findIndex(c => (c.numeroProcesso || c.processo || '').replace(/\D/g, '') === numerosApenas);
+                if (idxLocal >= 0) {
+                    casos[idxLocal].id = idServidorSeguro;
+                    if (prazosGuardados && prazosGuardados.length > 0) {
+                        casos[idxLocal].prazos = prazosGuardados.map(p => ({
+                            ...p,
+                            casoId: idServidorSeguro,
+                            caso: { id: idServidorSeguro }
+                        }));
+                    }
                 }
                 renderTabelaCasos();
             }
@@ -408,20 +422,20 @@ function filtrarTabela() {
 
 function calcularVencimento(dataInicioISO, quantidadeDias, tipoContagem) {
     if (!dataInicioISO || isNaN(quantidadeDias) || quantidadeDias <= 0) return '';
-    
+
     const partes = dataInicioISO.split('T')[0].split('-');
     let data = new Date(
-        parseInt(partes[0], 10), 
-        parseInt(partes[1], 10) - 1, 
+        parseInt(partes[0], 10),
+        parseInt(partes[1], 10) - 1,
         parseInt(partes[2], 10)
     );
-    
+
     let diasAdicionados = 0;
     const ehDiasUteis = (tipoContagem || '').toUpperCase() === 'DIAS_UTEIS' || tipoContagem === 'uteis';
 
     while (diasAdicionados < quantidadeDias) {
         data.setDate(data.getDate() + 1);
-        
+
         if (ehDiasUteis) {
             const diaDaSemana = data.getDay();
             if (diaDaSemana !== 0 && diaDaSemana !== 6) {
@@ -444,9 +458,9 @@ function recalcularVencimentoAuto() {
 
     const qtdDias = parseInt(elDias.value, 10);
     const tipoContagem = elContagem.value;
-    
-    const dataInicioRef = (prazoEmEdicao && prazoEmEdicao.dataCadastro) 
-        ? prazoEmEdicao.dataCadastro.split('T')[0] 
+
+    const dataInicioRef = (prazoEmEdicao && prazoEmEdicao.dataCadastro)
+        ? prazoEmEdicao.dataCadastro.split('T')[0]
         : formatarDataLocal(new Date());
 
     if (!isNaN(qtdDias) && qtdDias > 0) {
@@ -459,21 +473,17 @@ function recalcularVencimentoAuto() {
 async function abrirModalPrazos(numeroProcesso) {
     const numLimpo = String(numeroProcesso).replace(/\D/g, '');
     let casoEncontrado = casos.find(c => (c.numeroProcesso || c.processo || '').replace(/\D/g, '') === numLimpo);
-    
+
     if (!casoEncontrado) {
         alert("Erro: Caso não encontrado.");
         return;
-    }
-
-    if (!casoEncontrado.id) {
-        casoEncontrado.id = Date.now();
     }
 
     if (!casoEncontrado.prazos) {
         casoEncontrado.prazos = [];
     }
 
-    document.getElementById('casoIdParaPrazo').value = casoEncontrado.id;
+    document.getElementById('casoIdParaPrazo').value = casoEncontrado.id || '';
     document.getElementById('titulo-modal-prazos').innerText = `Prazos - Proc: ${formatarCNJ(numLimpo)}`;
 
     document.getElementById('modal-prazos').style.display = 'flex';
@@ -485,7 +495,7 @@ async function abrirModalPrazos(numeroProcesso) {
     if (isEncerrado) {
         if (formPrazo) formPrazo.style.display = 'none';
         mostrarErroPrazo(
-            "<strong>Aviso:</strong> Este caso está <strong>ENCERRADO</strong>. O histórico está disponível apenas para consulta.", 
+            "<strong>Aviso:</strong> Este caso está <strong>ENCERRADO</strong>. O histórico está disponível apenas para consulta.",
             "#fff3cd", "#856404", "#ffeeba"
         );
     } else {
@@ -502,9 +512,9 @@ function fecharModalPrazos() {
 
 function limparFormularioPrazo() {
     prazoEmEdicao = null;
-    
+
     const casoIdAtual = document.getElementById('casoIdParaPrazo')?.value;
-    
+
     const form = document.getElementById('form-prazo');
     if (form) {
         form.reset();
@@ -578,7 +588,7 @@ function renderTabelaPrazos() {
         const isCumprido = (prazo.status || '').toUpperCase() === 'CUMPRIDO';
         const statusClass = isCumprido ? 'badge-encerrado' : 'badge-ativo';
         const statusTexto = isCumprido ? 'Cumprido' : 'Pendente';
-        
+
         const isUteis = (prazo.tipoContagem || prazo.formaContagem || '').toUpperCase() === 'DIAS_UTEIS' || prazo.tipoContagem === 'uteis';
         const tipoContagemTexto = isUteis ? 'Dias Úteis' : 'Dias Corridos';
 
@@ -586,7 +596,7 @@ function renderTabelaPrazos() {
         const partesData = dataVencStr.split('-');
         const dataFormatada = partesData.length === 3 ? `${partesData[2]}/${partesData[1]}/${partesData[0]}` : dataVencStr;
 
-        const idEscapado = escaparHTML(String(prazo.id));
+        const idEscapado = escapingHTML ? escapingHTML(String(prazo.id)) : escapingHTML(String(prazo.id));
 
         let acoesHTML = '';
         if (isCumprido || isCasoEncerrado) {
@@ -629,7 +639,7 @@ function consultarPrazo(prazoId) {
     if (prazo.dias) document.getElementById('diasPrazo').value = prazo.dias;
 
     document.querySelectorAll('#form-prazo input, #form-prazo select, #form-prazo textarea').forEach(el => el.disabled = true);
-    
+
     const btnSalvar = document.getElementById('btn-salvar-prazo');
     if (btnSalvar) btnSalvar.style.display = "none";
 
@@ -671,7 +681,7 @@ async function marcarPrazoComoCumprido(prazoId) {
 
     if (confirm(`Deseja marcar o prazo "${prazo.descricao}" como CUMPRIDO?`)) {
         prazo.status = 'CUMPRIDO';
-        
+
         renderTabelaPrazos();
         limparFormularioPrazo();
 
@@ -715,9 +725,9 @@ async function salvarPrazo(e) {
     }
 
     const hojeStr = formatarDataLocal(new Date());
-    
-    const dataCadastroRef = (prazoEmEdicao && prazoEmEdicao.dataCadastro) 
-        ? prazoEmEdicao.dataCadastro.split('T')[0] 
+
+    const dataCadastroRef = (prazoEmEdicao && prazoEmEdicao.dataCadastro)
+        ? prazoEmEdicao.dataCadastro.split('T')[0]
         : hojeStr;
 
     if (dataVencimentoVal < dataCadastroRef) {
@@ -736,8 +746,7 @@ async function salvarPrazo(e) {
         });
     }
 
-    const payloadPrazo = {
-        id: prazoIdVal ? converterIdSeguro(prazoIdVal) : Date.now(),
+    const payloadBackendPrazo = {
         caso: { id: converterIdSeguro(casoIdVal) },
         casoId: converterIdSeguro(casoIdVal),
         descricao: descVal,
@@ -750,13 +759,22 @@ async function salvarPrazo(e) {
         historico: historicoAtualizado
     };
 
+    if (prazoIdVal) {
+        payloadBackendPrazo.id = converterIdSeguro(prazoIdVal);
+    }
+
+    const payloadPrazoLocal = {
+        ...payloadBackendPrazo,
+        id: prazoIdVal ? converterIdSeguro(prazoIdVal) : Date.now()
+    };
+
     if (!casoEncontrado.prazos) casoEncontrado.prazos = [];
-    
-    const idx = casoEncontrado.prazos.findIndex(p => String(p.id) === String(payloadPrazo.id));
+
+    const idx = casoEncontrado.prazos.findIndex(p => String(p.id) === String(payloadPrazoLocal.id));
     if (idx >= 0) {
-        casoEncontrado.prazos[idx] = payloadPrazo;
+        casoEncontrado.prazos[idx] = payloadPrazoLocal;
     } else {
-        casoEncontrado.prazos.push(payloadPrazo);
+        casoEncontrado.prazos.push(payloadPrazoLocal);
     }
 
     prazos = casoEncontrado.prazos;
@@ -771,13 +789,13 @@ async function salvarPrazo(e) {
         const resposta = await fetch(urlDestino, {
             method: metodoHttp,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payloadPrazo)
+            body: JSON.stringify(payloadBackendPrazo)
         });
 
         if (resposta.ok) {
             const prazoBackend = await resposta.json();
             if (prazoBackend && prazoBackend.id) {
-                const pos = casoEncontrado.prazos.findIndex(p => String(p.id) === String(payloadPrazo.id));
+                const pos = casoEncontrado.prazos.findIndex(p => String(p.id) === String(payloadPrazoLocal.id));
                 if (pos >= 0) {
                     casoEncontrado.prazos[pos] = prazoBackend;
                     prazos = casoEncontrado.prazos;

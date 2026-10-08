@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// O CasoController gerencia as rotas HTTP dos casos jurídicos, recebendo requisições para listar,
+// criar ou editar casos e encaminhando essas informações ao CasoServico para processamento
 @RestController
 @RequestMapping("/api/casos")
 public class CasoController {
@@ -31,7 +33,7 @@ public class CasoController {
     }
 
     @PostMapping
-    public ResponseEntity<?> cadastrarOuAtualizarCaso(
+    public ResponseEntity<?> cadastrarCaso(
             @RequestBody Caso caso,
             @AuthenticationPrincipal UserDetails userDetails,
             Authentication authentication) {
@@ -40,6 +42,24 @@ public class CasoController {
             return ResponseEntity.status(401).body("Usuário não autenticado.");
         }
 
+        Usuario usuarioLogado = usuarioServico.buscarPorEmail(userDetails.getUsername());
+        Caso casoSalvo = casoServico.salvarCaso(caso, usuarioLogado, authentication);
+        return ResponseEntity.ok(casoSalvo);
+    }
+
+    // Rota de Edição por ID (Corrige o erro 405 Method Not Allowed)
+    @PutMapping("/{id}")
+    public ResponseEntity<?> atualizarCaso(
+            @PathVariable Long id,
+            @RequestBody Caso caso,
+            @AuthenticationPrincipal UserDetails userDetails,
+            Authentication authentication) {
+
+        if (userDetails == null) {
+            return ResponseEntity.status(401).body("Usuário não autenticado.");
+        }
+
+        caso.setId(id); // Garante que o ID da URL seja atribuído ao objeto
         Usuario usuarioLogado = usuarioServico.buscarPorEmail(userDetails.getUsername());
         Caso casoSalvo = casoServico.salvarCaso(caso, usuarioLogado, authentication);
         return ResponseEntity.ok(casoSalvo);
