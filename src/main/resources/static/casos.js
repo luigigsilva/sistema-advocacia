@@ -325,7 +325,6 @@ async function salvarCaso(event) {
 
     const prazosGuardados = casoExistente ? (casoExistente.prazos || []) : [];
 
-    // Objeto enviado para o Back-end (NÃO envia id no POST para permitir o INSERT do PostgreSQL)
     const payloadBackend = {
         tipo: tipoVal,
         numeroProcesso: numerosApenas,
@@ -338,7 +337,6 @@ async function salvarCaso(event) {
         payloadBackend.id = converterIdSeguro(casoIdVal);
     }
 
-    // Objeto local para atualização imediata na interface
     const payloadLocal = {
         ...payloadBackend,
         id: casoIdVal ? converterIdSeguro(casoIdVal) : Date.now(),
@@ -596,7 +594,7 @@ function renderTabelaPrazos() {
         const partesData = dataVencStr.split('-');
         const dataFormatada = partesData.length === 3 ? `${partesData[2]}/${partesData[1]}/${partesData[0]}` : dataVencStr;
 
-        const idEscapado = escapingHTML ? escapingHTML(String(prazo.id)) : escapingHTML(String(prazo.id));
+        const idEscapado = escaparHTML(String(prazo.id));
 
         let acoesHTML = '';
         if (isCumprido || isCasoEncerrado) {
@@ -783,7 +781,8 @@ async function salvarPrazo(e) {
     renderTabelaPrazos();
 
     try {
-        const urlDestino = prazoIdVal ? `/api/prazos/${prazoIdVal}` : '/api/prazos';
+        // CORREÇÃO: Utiliza a rota do controller para novos prazos (/api/casos/{casoId}/prazos)
+        const urlDestino = prazoIdVal ? `/api/prazos/${prazoIdVal}` : `/api/casos/${casoIdVal}/prazos`;
         const metodoHttp = prazoIdVal ? 'PUT' : 'POST';
 
         const resposta = await fetch(urlDestino, {
