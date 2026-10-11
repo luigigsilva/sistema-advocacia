@@ -10,11 +10,22 @@
 }
 
 body {
-    background-color: #f4f5f7;
+    background-color: #ffffff;
     font-family: 'Work Sans', sans-serif;
     min-height: 100vh;
     color: #333;
     overflow-x: hidden;
+}
+
+/* Fundo claro centralizado para telas fora do Dashboard (Login, Cadastro, Recuperar Senha) */
+body:not(:has(.app-layout)),
+body.page-cadastro {
+    background-color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
 }
 
 h1, h2, h3 {
@@ -26,7 +37,165 @@ input, select, textarea, button, label {
 }
 
 /* =========================================
-   1. ESTRUTURA DASHBOARD (SIDEBAR RETRÁTIL)
+   1. TELAS DE AUTENTICAÇÃO (LOGIN / CADASTRO / RECUPERAR SENHA)
+   ========================================= */
+
+/* Card de Login e Recuperar Senha (.card-container) */
+.card-container {
+    background: #ffffff;
+    padding: 40px 30px;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    border: 1px solid #e3e6ec;
+}
+
+.card-container h1, 
+.card-container h2 {
+    font-family: 'Merriweather', serif;
+    color: #c3a066;
+    font-size: 1.8rem;
+    margin-bottom: 18px;
+}
+
+.card-container p {
+    font-size: 13px;
+    color: #6c757d;
+    margin-bottom: 20px;
+}
+
+/* Links no Card */
+.card-container a {
+    color: #6c757d;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 13px;
+    transition: color 0.2s ease-in-out;
+}
+
+.card-container a:hover {
+    color: #c3a066;
+    text-decoration: underline;
+}
+
+/* Posicionamento à Esquerda do 'Esqueceu sua senha?' */
+.esqueceu-senha {
+    text-align: left;
+    margin-top: 6px;
+}
+
+.esqueceu-senha a {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.esqueceu-senha a:hover {
+    color: #c3a066;
+}
+
+/* Card de Cadastro (.main-container & .card-register) */
+.main-container {
+    width: 100%;
+    max-width: 440px;
+    display: flex;
+    justify-content: center;
+}
+
+.card-register {
+    background: #ffffff;
+    padding: 35px 30px;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    border: 1px solid #e3e6ec;
+}
+
+.header-card {
+    text-align: center;
+    margin-bottom: 22px;
+}
+
+.header-card h1 {
+    font-family: 'Merriweather', serif;
+    color: #c3a066;
+    font-size: 1.8rem;
+    margin-bottom: 6px;
+}
+
+.header-card p {
+    font-size: 13px;
+    color: #6c757d;
+}
+
+.form-group {
+    margin-bottom: 18px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #555555;
+    margin-bottom: 6px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    border-color: #c3a066;
+    outline: none;
+}
+
+.btn-submit {
+    width: 100%;
+    padding: 12px;
+    background-color: #1a1c1e;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.2s;
+}
+
+.btn-submit:hover {
+    background-color: #333333;
+}
+
+.footer-card {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 13px;
+    color: #6c757d;
+}
+
+.footer-card a {
+    color: #6c757d;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease-in-out;
+}
+
+.footer-card a:hover {
+    color: #c3a066;
+    text-decoration: underline;
+}
+
+/* =========================================
+   2. ESTRUTURA DASHBOARD (SIDEBAR RETRÁTIL)
    ========================================= */
 .app-layout {
     display: flex;
@@ -34,7 +203,6 @@ input, select, textarea, button, label {
     width: 100%;
 }
 
-/* Sidebar Recolhida por Padrão (68px) */
 .sidebar {
     width: 68px;
     background-color: #1a1c1e;
@@ -52,7 +220,6 @@ input, select, textarea, button, label {
     overflow: hidden;
 }
 
-/* Expandir no Hover OU Clique */
 .sidebar:hover,
 .sidebar.expanded {
     width: 250px;
@@ -114,7 +281,6 @@ input, select, textarea, button, label {
     text-transform: uppercase;
 }
 
-/* Navegação */
 .sidebar-nav {
     display: flex;
     flex-direction: column;
@@ -184,7 +350,6 @@ input, select, textarea, button, label {
     background-color: rgba(220, 53, 69, 0.15);
 }
 
-/* ÁREA PRINCIPAL DA TELA */
 .main-wrapper {
     flex: 1;
     padding: 30px 35px;
@@ -221,7 +386,7 @@ input, select, textarea, button, label {
 }
 
 /* =========================================
-   2. FERRAMENTAS & TABELAS
+   3. FERRAMENTAS & TABELAS
    ========================================= */
 .barra-ferramentas {
     margin-bottom: 20px;
@@ -269,7 +434,6 @@ input, select, textarea, button, label {
     font-size: 13px;
 }
 
-/* Tabela Principal de Casos */
 #tabelaCasos {
     width: 100%;
 }
@@ -327,7 +491,6 @@ input, select, textarea, button, label {
     color: #212529;
 }
 
-/* TABELA DE PRAZOS */
 .container-tabela.tabela-prazos th,
 .container-tabela.tabela-prazos td {
     padding: 8px 6px;
@@ -340,7 +503,6 @@ input, select, textarea, button, label {
 .container-tabela.tabela-prazos th:nth-child(4) { width: 11%; }
 .container-tabela.tabela-prazos th:nth-child(5) { width: 21%; }
 
-/* TABELA DE HISTÓRICO */
 .container-tabela.tabela-historico {
     width: 100%;
     table-layout: fixed;
@@ -358,7 +520,6 @@ input, select, textarea, button, label {
 .container-tabela.tabela-historico th:nth-child(2) { width: 25%; }
 .container-tabela.tabela-historico th:nth-child(3) { width: 50%; }
 
-/* Container de Ações Empilhadas */
 td.td-acoes-prazos {
     padding: 6px !important;
     vertical-align: middle;
@@ -393,7 +554,6 @@ td.td-acoes-prazos {
     color: #212529;
 }
 
-/* Badges e Destaques Visuais */
 .badge {
     padding: 5px 8px;
     border-radius: 4px;
@@ -448,10 +608,10 @@ td.td-acoes-prazos {
 }
 
 /* =========================================
-   3. FORMULÁRIOS E MODAIS
+   4. FORMULÁRIOS E MODAIS (AJUSTADO SEM SCROLL)
    ========================================= */
 .input-group {
-    margin-bottom: 18px;
+    margin-bottom: 12px;
     text-align: left;
     width: 100%;
     display: flex;
@@ -460,25 +620,40 @@ td.td-acoes-prazos {
 
 .input-group label {
     display: block !important; 
-    font-size: 13px; 
+    font-size: 12px; 
     font-weight: 500; 
     color: #555555;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     width: 100%;
 }
 
 .input-group select, 
-.input-group input, 
-.input-group textarea {
+.input-group input {
     width: 100% !important; 
     display: block !important;
-    padding: 11px 12px; 
+    padding: 8px 10px; 
     border: 1px solid #d0d0d0;
     border-radius: 4px; 
     box-sizing: border-box;
     margin-top: 2px;
     background-color: #fff;
-    font-size: 14px;
+    font-size: 13px;
+    transition: border-color 0.3s;
+}
+
+.input-group textarea {
+    width: 100% !important;
+    display: block !important;
+    padding: 8px 10px;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    box-sizing: border-box;
+    margin-top: 2px;
+    background-color: #fff;
+    font-size: 13px;
+    height: 60px;
+    min-height: 50px;
+    resize: vertical;
     transition: border-color 0.3s;
 }
 
@@ -491,7 +666,7 @@ td.td-acoes-prazos {
 
 .form-row {
     display: flex;
-    gap: 15px;
+    gap: 12px;
 }
 
 .form-col {
@@ -500,13 +675,13 @@ td.td-acoes-prazos {
 
 .form-prazos-container {
     border-bottom: 1px solid #eee;
-    padding-bottom: 20px;
-    margin-bottom: 20px;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
 }
 
 .subtitulo-secao {
-    font-size: 16px;
-    margin-bottom: 10px;
+    font-size: 15px;
+    margin-bottom: 8px;
 }
 
 .modal {
@@ -527,12 +702,12 @@ td.td-acoes-prazos {
 .modal-content {
     position: relative;
     background: #fff; 
-    padding: 35px 30px; 
+    padding: 22px 25px; 
     border-radius: 8px;
     width: 90%; 
-    max-width: 460px; 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    max-height: 90vh;
+    max-width: 440px; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    max-height: 92vh;
     overflow-y: auto;
 }
 
@@ -541,28 +716,28 @@ td.td-acoes-prazos {
 }
 
 .modal-content.modal-caso-content {
-    max-width: 460px;
+    max-width: 440px;
 }
 
 .modal-content.modal-historico-content {
     max-width: 680px !important;
     width: 95%;
-    padding: 35px 30px;
+    padding: 25px 25px;
 }
 
 .modal-content h2 { 
     text-align: center; 
-    margin-bottom: 20px; 
-    font-size: 22px; 
+    margin-bottom: 15px; 
+    font-size: 20px; 
 }
 
 .btn-fechar-modal {
     position: absolute;
-    top: 18px;
-    right: 20px;
+    top: 15px;
+    right: 18px;
     background: none;
     border: none;
-    font-size: 26px;
+    font-size: 24px;
     cursor: pointer;
     color: #666;
     font-weight: bold;
@@ -575,23 +750,29 @@ td.td-acoes-prazos {
     color: #000;
 }
 
+.modal-content .btn-submit,
+.modal-content #btn-salvar {
+    margin-top: 10px;
+    padding: 10px;
+}
+
 .erro-box {
     background-color: #f8d7da; 
     color: #721c24; 
     border: 1px solid #f5c6cb;
-    padding: 12px; 
+    padding: 10px; 
     border-radius: 4px; 
-    font-size: 13px; 
-    margin-bottom: 20px;
+    font-size: 12px; 
+    margin-bottom: 12px;
 }
 
 .barra-ferramentas-painel {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     background-color: #f8f9fa;
-    padding: 12px 15px;
+    padding: 10px 12px;
     border-radius: 6px;
     border: 1px solid #e9ecef;
 }
@@ -606,8 +787,8 @@ td.td-acoes-prazos {
 }
 
 .config-antecedencia-container {
-    margin: 15px 0;
-    padding: 12px;
+    margin: 12px 0;
+    padding: 10px;
     background-color: #f8f9fa;
     border: 1px solid #e9ecef;
     border-radius: 6px;
@@ -615,10 +796,10 @@ td.td-acoes-prazos {
 
 .config-antecedencia-container label {
     font-weight: bold;
-    font-size: 13px;
+    font-size: 12px;
     color: #495057;
     display: block;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 
 .config-antecedencia-input-group {
@@ -641,7 +822,7 @@ td.td-acoes-prazos {
     padding: 6px 12px;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: bold;
     transition: background-color 0.2s;
 }
@@ -650,7 +831,9 @@ td.td-acoes-prazos {
     background-color: #5a6268;
 }
 
-/* RESPONSIVIDADE MOBILES */
+/* =========================================
+   5. RESPONSIVIDADE
+   ========================================= */
 @media (max-width: 768px) {
     .app-layout {
         flex-direction: column;
