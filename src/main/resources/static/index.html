@@ -8,141 +8,237 @@
 </head>
 <body>
 
-<div class="card-container painel-casos">
-
-    <!-- Cabeçalho do Painel -->
-    <div class="painel-header">
-        <h1>Painel de Casos</h1>
-        <div class="header-acoes">
-            <button class="btn-novo-caso" onclick="abrirModalNovo()">+ Novo Caso</button>
-            <a href="/logout" class="btn-sair">Sair</a>
-        </div>
-    </div>
-
-    <!-- Campo de Filtro/Pesquisa -->
-    <div class="barra-ferramentas">
-        <input type="text" id="pesquisaCaso" class="input-pesquisa" placeholder="Pesquisar por nº de processo ou tipo..." onkeyup="filtrarTabela()">
-    </div>
-
-    <!-- Tabela Principal de Casos -->
-    <table class="container-tabela" id="tabelaCasos">
-        <thead>
-            <tr>
-                <th>Nº Processo/Protocolo</th>
-                <th>Tipo</th>
-                <th>Status</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody id="tabela-corpo">
-            <!-- Linhas injetadas via JavaScript -->
-        </tbody>
-    </table>
-
-</div>
-
-<!-- Modal: Novo/Editar Caso -->
-<div id="modal-caso" class="modal">
-    <div class="modal-content">
-        <button type="button" class="btn-fechar-modal" onclick="fecharModal()">&times;</button>
-        <h2 id="titulo-modal">Novo Caso</h2>
-        <div id="modal-erro"></div>
-        <form id="form-caso">
-            <input type="hidden" id="casoId" name="casoId">
-
-            <div class="input-group">
-                <label for="tipo">Tipo de Perícia *</label>
-                <select id="tipo" name="tipo" required>
-                    <option value="">Selecione...</option>
-                    <option value="Judicial">Judicial</option>
-                    <option value="Administrativa">Administrativa</option>
-                </select>
+    <div class="app-layout">
+        <!-- BARRA LATERAL RETRÁTIL (SIDEBAR) -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button class="btn-toggle-sidebar" id="btnToggleSidebar" onclick="toggleSidebar()" title="Expandir/Recolher Menu">☰</button>
+                <div class="sidebar-brand">
+                    <div class="brand-logo">⚖️</div>
+                    <div class="brand-text">
+                        <h2>JURISYNC</h2>
+                        <span>Gestão Pericial</span>
+                    </div>
+                </div>
             </div>
 
-            <div class="input-group">
-                <label for="processo">Nº do Processo/Protocolo *</label>
-                <input type="text" id="processo" name="processo" required placeholder="Ex: 0000000-00.0000.0.00.0000" maxlength="25">
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" title="Casos & Protocolos">
+                    <span class="nav-icon">📁</span>
+                    <span class="nav-label">Casos & Protocolos</span>
+                </a>
+                <a href="#" class="nav-item" onclick="abrirPainelGeralPrazos()" title="Painel de Prazos">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">Painel de Prazos</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="/logout" class="btn-logout" title="Sair do Sistema">
+                    <span class="nav-icon">🚪</span>
+                    <span class="nav-label">Sair do Sistema</span>
+                </a>
             </div>
+        </aside>
 
-            <div class="input-group">
-                <label for="descricao">Descrição</label>
-                <textarea id="descricao" name="descricao" rows="2" placeholder="Detalhes breves..."></textarea>
-            </div>
+        <!-- ÁREA PRINCIPAL DE CONTEÚDO (TELA DOMINANTE) -->
+        <main class="main-wrapper">
+            <header class="main-header">
+                <div>
+                    <h1>Painel de Casos</h1>
+                    <p class="subtitulo-header">Gerencie e acompanhe todos os protocolos periciais ativos e encerrados.</p>
+                </div>
+                <button class="btn-novo-caso" onclick="abrirModalNovo()">+ Novo Caso</button>
+            </header>
 
-            <div class="input-group">
-                <label for="dataAbertura">Data de Abertura *</label>
-                <input type="date" id="dataAbertura" name="dataAbertura" required>
-            </div>
-
-            <div class="input-group">
-                <button type="submit" id="btn-salvar" class="btn-entrar">Concluir</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Modal: Controle de Prazos (RF009, RF018, RN009, RN014) -->
-<div id="modal-prazos" class="modal">
-    <div class="modal-content modal-prazos-content">
-        <button type="button" class="btn-fechar-modal" onclick="fecharModalPrazos()">&times;</button>
-        <h2 id="titulo-modal-prazos">Prazos do Processo</h2>
-        
-        <div id="modal-prazo-erro"></div>
-
-        <form id="form-prazo" class="form-prazos-container">
-            <!-- Inputs Ocultos -->
-            <input type="hidden" id="casoIdParaPrazo">
-            <input type="hidden" id="prazoId">
-
-            <div class="input-group">
-                <label for="descPrazo">Descrição da Atividade *</label>
-                <input type="text" id="descPrazo" required placeholder="Ex: Apresentar defesa prévia">
-            </div>
-
-            <div class="form-row">
-                <div class="input-group form-col">
-                    <label for="diasPrazo">Prazo (em Dias)</label>
-                    <input type="number" id="diasPrazo" min="1" placeholder="Ex: 15">
+            <section class="card-conteudo">
+                <div class="barra-ferramentas">
+                    <input type="text" id="pesquisaCaso" onkeyup="filtrarTabela()" placeholder="Pesquisar por número de processo ou tipo..." class="input-pesquisa">
                 </div>
 
-                <div class="input-group form-col">
-                    <label for="tipoContagem">Contagem *</label>
-                    <select id="tipoContagem" required>
-                        <option value="DIAS_UTEIS">Dias Úteis</option>
-                        <option value="DIAS_CORRIDOS">Dias Corridos</option>
+                <div class="tabela-responsive-wrapper">
+                    <table class="container-tabela" id="tabelaCasos">
+                        <thead>
+                            <tr>
+                                <th>Nº Processo/Protocolo</th>
+                                <th>Tipo</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-corpo">
+                            <!-- Preenchido via casos.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL 1: Cadastrar / Editar Caso -->
+    <div id="modal-caso" class="modal">
+        <div class="modal-content modal-caso-content">
+            <button class="btn-fechar-modal" onclick="fecharModal()">&times;</button>
+            <h2 id="titulo-modal">Novo Caso</h2>
+            <div id="modal-erro"></div>
+            
+            <form id="form-caso">
+                <input type="hidden" id="casoId">
+                
+                <div class="input-group">
+                    <label for="tipo">Tipo de Processo *</label>
+                    <select id="tipo" required>
+                        <option value="">Selecione o tipo...</option>
+                        <option value="Judicial">Judicial</option>
+                        <option value="Administrativa">Administrativa</option>
                     </select>
                 </div>
 
-                <div class="input-group form-col">
-                    <label for="dataVencimento">Vencimento *</label>
-                    <input type="date" id="dataVencimento" required>
+                <div class="input-group">
+                    <label for="processo">Nº do Processo / Protocolo *</label>
+                    <input type="text" id="processo" maxlength="25" placeholder="0000000-00.0000.0.00.0000" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="dataAbertura">Data de Abertura *</label>
+                    <input type="date" id="dataAbertura" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="descricao">Descrição</label>
+                    <textarea id="descricao" rows="3" placeholder="Observações do caso..."></textarea>
+                </div>
+
+                <button type="submit" id="btn-salvar" class="btn-entrar">Concluir</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Gerenciar Prazos do Caso -->
+    <div id="modal-prazos" class="modal">
+        <div class="modal-content modal-prazos-content">
+            <button class="btn-fechar-modal" onclick="fecharModalPrazos()">&times;</button>
+            <h2 id="titulo-modal-prazos">Prazos do Caso</h2>
+            <div id="modal-prazo-erro"></div>
+
+            <div class="config-antecedencia-container">
+                <label for="diasAntecedencia">Antecedência de Alerta (Dias):</label>
+                <div class="config-antecedencia-input-group">
+                    <input type="number" id="diasAntecedencia" min="1" value="3">
+                    <button type="button" class="btn-salvar-antecedencia" onclick="salvarConfiguracaoAntecedencia()">Salvar Preferência</button>
                 </div>
             </div>
 
-            <div class="input-group">
-                <button type="submit" id="btn-salvar-prazo" class="btn-entrar btn-adicionar-prazo">Cadastrar Prazo</button>
+            <form id="form-prazo" class="form-prazos-container">
+                <input type="hidden" id="casoIdParaPrazo">
+                <input type="hidden" id="prazoId">
+
+                <div class="input-group">
+                    <label for="descPrazo">Descrição do Prazo *</label>
+                    <input type="text" id="descPrazo" placeholder="Ex: Entregar Laudo Pericial" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col input-group">
+                        <label for="diasPrazo">Quantidade de Dias</label>
+                        <input type="number" id="diasPrazo" min="1" placeholder="Ex: 15">
+                    </div>
+                    <div class="form-col input-group">
+                        <label for="tipoContagem">Tipo de Contagem</label>
+                        <select id="tipoContagem">
+                            <option value="DIAS_CORRIDOS">Dias Corridos</option>
+                            <option value="DIAS_UTEIS">Dias Úteis</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="dataVencimento">Data de Vencimento *</label>
+                    <input type="date" id="dataVencimento" required>
+                </div>
+
+                <button type="submit" id="btn-salvar-prazo" class="btn-novo-caso btn-adicionar-prazo">Cadastrar Prazo</button>
+            </form>
+
+            <h3 class="subtitulo-secao">Prazos Cadastrados</h3>
+            <div class="tabela-responsive-wrapper">
+                <table class="container-tabela tabela-prazos">
+                    <thead>
+                        <tr>
+                            <th>Descrição</th>
+                            <th>Vencimento</th>
+                            <th>Contagem</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-corpo-prazos">
+                        <!-- Preenchido via casos.js -->
+                    </tbody>
+                </table>
             </div>
-        </form>
-
-        <h3 class="subtitulo-secao">Prazos Cadastrados</h3>
-        <table class="container-tabela tabela-prazos">
-            <thead>
-                <tr>
-                    <th>Descrição</th>
-                    <th>Vencimento</th>
-                    <th>Contagem</th>
-                    <th>Status</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody id="tabela-corpo-prazos">
-                <!-- Linhas injetadas via JavaScript -->
-            </tbody>
-        </table>
+        </div>
     </div>
-</div>
 
-<script src="casos.js"></script>
+    <!-- MODAL 3: Painel Consolidado Geral de Prazos -->
+    <div id="modal-painel-geral" class="modal">
+        <div class="modal-content modal-prazos-content">
+            <button class="btn-fechar-modal" onclick="fecharModalPainelGeral()">&times;</button>
+            <h2>📊 Painel Consolidado de Prazos</h2>
 
+            <div class="barra-ferramentas-painel">
+                <label for="filtroStatusPainel"><strong>Filtrar por Status:</strong></label>
+                <select id="filtroStatusPainel" onchange="filtrarPainelPrazos()" class="select-filtro-painel">
+                    <option value="TODOS">Todos os Prazos</option>
+                    <option value="PROXIMO">Próximos do Vencimento</option>
+                    <option value="VENCIDO">Vencidos</option>
+                    <option value="CUMPRIDO">Cumpridos</option>
+                </select>
+            </div>
+
+            <div class="tabela-responsive-wrapper">
+                <table class="container-tabela tabela-prazos">
+                    <thead>
+                        <tr>
+                            <th>Processo</th>
+                            <th>Descrição</th>
+                            <th>Vencimento</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-corpo-painel-geral">
+                        <!-- Preenchido via casos.js -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: Histórico de Alterações de Prazo -->
+    <div id="modal-historico-prazo" class="modal">
+        <div class="modal-content modal-historico-content">
+            <button class="btn-fechar-modal" onclick="fecharModalHistorico()">&times;</button>
+            <h2>📜 Histórico de Alterações</h2>
+            <p id="subtitulo-historico" style="font-size: 13px; color: #666; margin-bottom: 20px; text-align: center;"></p>
+
+            <div class="tabela-responsive-wrapper" style="overflow-x: hidden;">
+                <table class="container-tabela tabela-historico">
+                    <thead>
+                        <tr>
+                            <th>Data Anterior</th>
+                            <th>Nova Data</th>
+                            <th>Data Alteração</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-corpo-historico">
+                        <!-- Preenchido via casos.js -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="casos.js"></script>
 </body>
 </html>

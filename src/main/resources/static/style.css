@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Work+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Work+Sans:wght@300;400;500;600;700&display=swap');
 
 /* =========================================
    RESET E BASE
@@ -10,13 +10,11 @@
 }
 
 body {
-    background-color: #e2e4e8;
+    background-color: #f4f5f7;
     font-family: 'Work Sans', sans-serif;
     min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px 0;
+    color: #333;
+    overflow-x: hidden;
 }
 
 h1, h2, h3 {
@@ -27,226 +25,227 @@ input, select, textarea, button, label {
     font-family: 'Work Sans', sans-serif;
 }
 
-/* Links genéricos e parágrafos de rodapé (Login / Recuperação) */
-p {
-    margin-top: 20px;
-    font-size: 13px;
-    text-align: center;
-}
-
-p a {
-    color: #777777;
-    text-decoration: none;
-    transition: color 0.3s;
-}
-
-p a:hover {
-    color: #c5a059;
-    text-decoration: underline;
-}
-
 /* =========================================
-   1. CARD / CONTAINER GERAL
+   1. ESTRUTURA DASHBOARD (SIDEBAR RETRÁTIL)
    ========================================= */
-.card-container {
-    background-color: #ffffff;
-    padding: 45px 40px;
-    border-radius: 8px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-    border-top: 4px solid #c5a059;
-    width: 100%;
-    max-width: 380px;
-    text-align: center;
-}
-
-.card-container h1 {
-    font-size: 1.5rem;
-    letter-spacing: 2px;
-    color: #c3a066;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-}
-
-/* Container expandido para o Painel de Casos */
-.card-container.painel-casos {
-    max-width: 1500px;
-    width: 95%;
-    margin: 20px auto;
-    padding: 40px;
-    border: 2px solid #dcdcdc;
-    border-top: 4px solid #c5a059;
-    border-radius: 10px;
-    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
-    text-align: left;
-}
-
-/* =========================================
-   2. PÁGINA DE LOGIN E RECUPERAÇÃO DE SENHA
-   ========================================= */
-.esqueceu-senha {
-    text-align: left;
-    margin-top: 6px;
-}
-
-.esqueceu-senha a {
-    color: #777777;
-    font-size: 12px;
-    text-decoration: none;
-    transition: color 0.3s;
-}
-
-.esqueceu-senha a:hover,
-.esqueceu-senha a:active {
-    color: #c5a059;
-    text-decoration: underline;
-}
-
-/* =========================================
-   3. PÁGINA DE CADASTRO
-   ========================================= */
-body.page-cadastro {
-    padding: 20px;
-}
-
-.page-cadastro .main-container {
-    width: 100%;
-    max-width: 440px;
-}
-
-.page-cadastro .card-register {
-    background-color: #ffffff;
-    border-top: 4px solid #c3a066;
-    border-radius: 8px;
-    padding: 40px 32px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-}
-
-.page-cadastro .header-card {
-    text-align: center;
-    margin-bottom: 32px;
-}
-
-.page-cadastro .header-card h1 {
-    font-size: 1.5rem;
-    letter-spacing: 2px;
-    color: #c3a066;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-}
-
-.page-cadastro .header-card p {
-    font-size: 0.875rem;
-    color: #666666;
-    line-height: 1.4;
-    margin-top: 0;
-}
-
-.page-cadastro .form-register {
+.app-layout {
     display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.page-cadastro .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.page-cadastro .form-group label {
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: #4a4a4a;
-}
-
-.page-cadastro .form-group input {
+    min-height: 100vh;
     width: 100%;
-    padding: 12px 14px;
-    border-radius: 6px;
-    border: 1px solid #d1d5db;
-    background-color: #ffffff;
-    font-size: 0.95rem;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.page-cadastro .form-group input:focus {
-    border-color: #c3a066;
-    box-shadow: 0 0 0 3px rgba(195, 160, 102, 0.2);
-}
-
-.page-cadastro .btn-submit {
-    margin-top: 10px;
-    padding: 12px;
-    background-color: #2b2c2c;
+/* Sidebar Recolhida por Padrão (68px) */
+.sidebar {
+    width: 68px;
+    background-color: #1a1c1e;
     color: #ffffff;
-    border: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 18px 10px;
+    border-right: 1px solid #2d3034;
+    flex-shrink: 0;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 100;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/* Expandir no Hover OU Clique */
+.sidebar:hover,
+.sidebar.expanded {
+    width: 250px;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.25);
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #2d3034;
+    margin-bottom: 15px;
+}
+
+.btn-toggle-sidebar {
+    background: #2b2e33;
+    color: #c5a059;
+    border: 1px solid #3e4248;
     border-radius: 6px;
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 18px;
+    padding: 8px 11px;
     cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.btn-toggle-sidebar:hover {
+    background: #c5a059;
+    color: #1a1c1e;
+}
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.sidebar:hover .sidebar-brand,
+.sidebar.expanded .sidebar-brand {
+    opacity: 1;
+}
+
+.brand-logo {
+    font-size: 20px;
+}
+
+.brand-text h2 {
+    font-size: 1rem;
+    color: #c5a059;
+    letter-spacing: 1px;
+}
+
+.brand-text span {
+    font-size: 10px;
+    color: #8e949e;
+    text-transform: uppercase;
+}
+
+/* Navegação */
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    color: #b0b7c3;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: all 0.2s ease-in-out;
+}
+
+.nav-item:hover {
+    background-color: #2b2e33;
+    color: #ffffff;
+}
+
+.nav-item.active {
+    background-color: #c5a059;
+    color: #1a1c1e;
+    font-weight: 600;
+}
+
+.nav-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.nav-label {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.sidebar:hover .nav-label,
+.sidebar.expanded .nav-label {
+    opacity: 1;
+}
+
+.sidebar-footer {
+    padding-top: 15px;
+    border-top: 1px solid #2d3034;
+}
+
+.btn-logout {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 10px 12px;
+    color: #dc3545;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 6px;
     transition: background-color 0.2s;
 }
 
-.page-cadastro .btn-submit:hover {
-    background-color: #1a1a1a;
+.btn-logout:hover {
+    background-color: rgba(220, 53, 69, 0.15);
 }
 
-.page-cadastro .footer-card {
-    margin-top: 24px;
-    text-align: center;
-    font-size: 0.875rem;
-    color: #666666;
+/* ÁREA PRINCIPAL DA TELA */
+.main-wrapper {
+    flex: 1;
+    padding: 30px 35px;
+    overflow-y: auto;
+    width: calc(100% - 68px);
 }
 
-.page-cadastro .footer-card a {
-    color: #2b2c2c;
-    text-decoration: none;
-    font-weight: 500;
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 25px;
 }
 
-.page-cadastro .footer-card a:hover {
-    text-decoration: underline;
+.main-header h1 {
+    font-size: 1.8rem;
+    color: #c3a066;
+    letter-spacing: 1px;
+}
+
+.subtitulo-header {
+    font-size: 13px;
+    color: #6c757d;
+    margin-top: 4px;
+}
+
+.card-conteudo {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e3e6ec;
+    width: 100%;
 }
 
 /* =========================================
-   4. PAINEL DE CASOS (DASHBOARD & TABELAS)
+   2. FERRAMENTAS & TABELAS
    ========================================= */
-.painel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.painel-header h1 {
-    font-size: 1.5rem;
-    letter-spacing: 2px;
-    color: #c3a066;
-    text-transform: uppercase;
-    margin-bottom: 0;
-}
-
-.header-acoes {
-    display: flex;
-    gap: 15px;
-    align-items: center;
-}
-
 .barra-ferramentas {
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 
 .input-pesquisa {
     width: 100%;
     padding: 12px 15px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
     font-size: 14px;
-    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.2s;
 }
 
-/* TABELA COM LAYOUT FIXO (Corrige desalinhamento de bordas) */
+.input-pesquisa:focus {
+    border-color: #c5a059;
+}
+
+.tabela-responsive-wrapper {
+    width: 100%;
+    overflow-x: hidden;
+}
+
 .container-tabela {
     width: 100%;
     border-collapse: collapse;
@@ -255,113 +254,193 @@ body.page-cadastro {
 
 .container-tabela th, 
 .container-tabela td {
-    border: 1px solid #ddd;
-    padding: 14px;
+    border: 1px solid #e9ecef;
+    padding: 10px 8px;
     text-align: left;
     vertical-align: middle;
+    white-space: nowrap;
     box-sizing: border-box;
-    word-wrap: break-word;
 }
 
 .container-tabela th {
-    background-color: #f4f4f4;
-    color: #333;
+    background-color: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    font-size: 13px;
 }
 
-/* Larguras fixas para a tabela principal de CASOS (4 colunas) */
-#tabelaCasos th:nth-child(1) { width: 30%; }
-#tabelaCasos th:nth-child(2) { width: 20%; }
-#tabelaCasos th:nth-child(3) { width: 15%; }
-#tabelaCasos th:nth-child(4) { width: 35%; }
+/* Tabela Principal de Casos */
+#tabelaCasos {
+    width: 100%;
+}
 
-/* Larguras ajustadas para a tabela de PRAZOS (5 colunas) */
+#tabelaCasos th:nth-child(1) { width: 30%; }
+#tabelaCasos th:nth-child(2) { width: 14%; }
+#tabelaCasos th:nth-child(3) { width: 12%; }
+#tabelaCasos th:nth-child(4) { width: 44%; }
+
+#tabelaCasos td:first-child {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: -0.3px;
+}
+
+#tabelaCasos td.td-acoes {
+    padding: 0 !important;
+    height: 1px;
+    vertical-align: stretch;
+}
+
+.acoes-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    width: 100%;
+    height: 100%;
+    min-height: 44px;
+}
+
+.link-acao { 
+    flex: 1 1 0px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    text-decoration: none; 
+    font-weight: 500; 
+    font-size: 11px;
+    color: #495057;
+    background-color: #f8f9fa;
+    border: none;
+    border-right: 1px solid #e9ecef;
+    padding: 6px 2px;
+    transition: background-color 0.2s;
+}
+
+.link-acao:last-child {
+    border-right: none;
+}
+
+.link-acao:hover { 
+    background-color: #e2e6ea;
+    color: #212529;
+}
+
+/* TABELA DE PRAZOS */
 .container-tabela.tabela-prazos th,
 .container-tabela.tabela-prazos td {
-    padding: 8px;
-    font-size: 14px;
+    padding: 8px 6px;
+    font-size: 13px;
 }
 
-.container-tabela.tabela-prazos th:nth-child(1) { width: 30%; } /* Descrição */
-.container-tabela.tabela-prazos th:nth-child(2) { width: 18%; } /* Vencimento */
-.container-tabela.tabela-prazos th:nth-child(3) { width: 17%; } /* Contagem */
-.container-tabela.tabela-prazos th:nth-child(4) { width: 15%; } /* Status */
-.container-tabela.tabela-prazos th:nth-child(5) { width: 20%; } /* Ações */
+.container-tabela.tabela-prazos th:nth-child(1) { width: 34%; }
+.container-tabela.tabela-prazos th:nth-child(2) { width: 18%; }
+.container-tabela.tabela-prazos th:nth-child(3) { width: 16%; }
+.container-tabela.tabela-prazos th:nth-child(4) { width: 11%; }
+.container-tabela.tabela-prazos th:nth-child(5) { width: 21%; }
 
-/* Badges e Ações */
+/* TABELA DE HISTÓRICO */
+.container-tabela.tabela-historico {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.container-tabela.tabela-historico th,
+.container-tabela.tabela-historico td {
+    padding: 12px 10px;
+    font-size: 13px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.container-tabela.tabela-historico th:nth-child(1) { width: 25%; }
+.container-tabela.tabela-historico th:nth-child(2) { width: 25%; }
+.container-tabela.tabela-historico th:nth-child(3) { width: 50%; }
+
+/* Container de Ações Empilhadas */
+td.td-acoes-prazos {
+    padding: 6px !important;
+    vertical-align: middle;
+}
+
+.acoes-container-prazos {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+}
+
+.link-acao-prazo {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 11px;
+    color: #495057;
+    background-color: #ffffff;
+    border: 1px solid #ced4da;
+    padding: 5px 6px;
+    border-radius: 4px;
+    transition: all 0.2s ease-in-out;
+}
+
+.link-acao-prazo:hover {
+    background-color: #e2e6ea;
+    color: #212529;
+}
+
+/* Badges e Destaques Visuais */
 .badge {
-    padding: 4px 8px;
+    padding: 5px 8px;
     border-radius: 4px;
     font-size: 12px;
     font-weight: bold;
     display: inline-block;
+    white-space: nowrap;
 }
 
 .badge-ativo { background-color: #d4edda; color: #155724; }
 .badge-encerrado { background-color: #e2e3e5; color: #383d41; }
+.badge-danger { background-color: #dc3545; color: #ffffff; }
+.badge-warning { background-color: #ffc107; color: #212529; }
 
-.acoes-container {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.link-acao { 
-    text-decoration: none; 
-    font-weight: bold; 
-    font-size: 14px; 
-    color: #007bff; 
-}
-
-.link-acao:hover { 
-    color: #0056b3; 
-    text-decoration: underline; 
-}
-
-/* Botões */
-.btn-sair {
-    background-color: #dc3545; 
-    color: white; 
-    border: none;
-    padding: 10px 20px; 
-    border-radius: 4px; 
-    cursor: pointer;
-    text-decoration: none; 
-    font-weight: bold;
-    font-size: 14px;
-}
-
-.btn-sair:hover { background-color: #c82333; }
+.linha-vencido { background-color: #ffe6e6 !important; color: #721c24; font-weight: bold; }
+.linha-proximo { background-color: #fff9db !important; color: #856404; }
+.linha-cumprido { background-color: #f1f3f5 !important; text-decoration: line-through; color: #6c757d; opacity: 0.75; }
 
 .btn-novo-caso {
-    background-color: #222; 
+    background-color: #1a1c1e; 
     color: #fff; 
     border: none;
     padding: 10px 20px; 
-    border-radius: 4px; 
+    border-radius: 6px; 
     cursor: pointer;
-    font-weight: bold; 
-    transition: 0.3s;
+    font-weight: 600; 
+    transition: 0.2s;
     font-size: 14px;
 }
 
-.btn-novo-caso:hover { background-color: #444; }
+.btn-novo-caso:hover { background-color: #333; }
 
 .btn-entrar {
     width: 100%;
     padding: 12px;
-    background-color: #2c2c2c;
+    background-color: #1a1c1e;
     color: #ffffff;
     border: none;
-    border-radius: 4px;
-    font-weight: 500;
+    border-radius: 6px;
+    font-weight: 600;
     font-size: 15px;
     cursor: pointer;
-    margin-top: 10px;
-    transition: background-color 0.3s;
+    margin-top: 15px;
+    transition: background-color 0.2s;
 }
 
-.btn-entrar:hover { background-color: #1a1a1a; }
+.btn-entrar:hover { background-color: #333; }
 
 .btn-adicionar-prazo {
     width: auto;
@@ -369,30 +448,35 @@ body.page-cadastro {
 }
 
 /* =========================================
-   5. FORMULÁRIOS, MODAIS E ERROS
+   3. FORMULÁRIOS E MODAIS
    ========================================= */
 .input-group {
     margin-bottom: 18px;
     text-align: left;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .input-group label {
-    display: block; 
+    display: block !important; 
     font-size: 13px; 
     font-weight: 500; 
     color: #555555;
     margin-bottom: 6px;
+    width: 100%;
 }
 
 .input-group select, 
 .input-group input, 
 .input-group textarea {
-    width: 100%; 
+    width: 100% !important; 
+    display: block !important;
     padding: 11px 12px; 
     border: 1px solid #d0d0d0;
     border-radius: 4px; 
     box-sizing: border-box;
-    margin-top: 5px;
+    margin-top: 2px;
     background-color: #fff;
     font-size: 14px;
     transition: border-color 0.3s;
@@ -403,14 +487,6 @@ body.page-cadastro {
 .input-group textarea:focus {
     border-color: #c5a059; 
     outline: none;
-}
-
-.input-group input:disabled, 
-.input-group select:disabled, 
-.input-group textarea:disabled {
-    background-color: #f4f4f4; 
-    color: #666; 
-    cursor: not-allowed;
 }
 
 .form-row {
@@ -451,15 +527,27 @@ body.page-cadastro {
 .modal-content {
     position: relative;
     background: #fff; 
-    padding: 40px 30px; 
+    padding: 35px 30px; 
     border-radius: 8px;
     width: 90%; 
-    max-width: 400px; 
+    max-width: 460px; 
     box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .modal-content.modal-prazos-content {
-    max-width: 650px;
+    max-width: 820px;
+}
+
+.modal-content.modal-caso-content {
+    max-width: 460px;
+}
+
+.modal-content.modal-historico-content {
+    max-width: 680px !important;
+    width: 95%;
+    padding: 35px 30px;
 }
 
 .modal-content h2 { 
@@ -470,16 +558,17 @@ body.page-cadastro {
 
 .btn-fechar-modal {
     position: absolute;
-    top: 15px;
-    right: 15px;
+    top: 18px;
+    right: 20px;
     background: none;
     border: none;
-    font-size: 24px;
+    font-size: 26px;
     cursor: pointer;
     color: #666;
     font-weight: bold;
     line-height: 1;
     transition: color 0.2s;
+    z-index: 10;
 }
 
 .btn-fechar-modal:hover {
@@ -494,4 +583,98 @@ body.page-cadastro {
     border-radius: 4px; 
     font-size: 13px; 
     margin-bottom: 20px;
+}
+
+.barra-ferramentas-painel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    background-color: #f8f9fa;
+    padding: 12px 15px;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.select-filtro-painel {
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: #ffffff;
+    cursor: pointer;
+}
+
+.config-antecedencia-container {
+    margin: 15px 0;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+}
+
+.config-antecedencia-container label {
+    font-weight: bold;
+    font-size: 13px;
+    color: #495057;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.config-antecedencia-input-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.config-antecedencia-input-group input[type="number"] {
+    width: 80px;
+    padding: 6px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
+
+.btn-salvar-antecedencia {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+.btn-salvar-antecedencia:hover {
+    background-color: #5a6268;
+}
+
+/* RESPONSIVIDADE MOBILES */
+@media (max-width: 768px) {
+    .app-layout {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100% !important;
+        height: auto;
+        padding: 12px 15px;
+    }
+
+    .sidebar-header {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+
+    .main-wrapper {
+        width: 100%;
+        padding: 20px 15px;
+    }
+
+    .main-header {
+        flex-direction: column;
+        gap: 15px;
+    }
 }
