@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 //O UsuarioServico cuida da criação, busca e segurança dos usuários,
 //criptografando suas senhas com BCrypt e buscando usuários pelo e-mail durante o login.
@@ -47,5 +48,14 @@ public class UsuarioServico implements UserDetailsService {
     public Usuario buscarPorEmail(String email) {
         return usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado com o e-mail: " + email));
+    }
+
+    @Transactional
+    public Usuario atualizarDiasAntecedencia(Usuario usuario, Integer dias) {
+        if (dias == null || dias < 1) {
+            throw new IllegalArgumentException("A antecedência deve ser de no mínimo 1 dia.");
+        }
+        usuario.setDiasAntecedencia(dias);
+        return usuarioRepository.save(usuario);
     }
 }

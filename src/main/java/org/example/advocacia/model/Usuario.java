@@ -34,4 +34,7 @@ public class Usuario {
     @Size(min = 6, message = "A senha deve ter no mínimo 6 caracteres")
     @Column(nullable = false)
     private String senha;
+
+    @Column(name = "dias_antecedencia", nullable = false, columnDefinition = "integer default 3")
+    private Integer diasAntecedencia = 3;
 }

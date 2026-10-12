@@ -118,7 +118,7 @@ public class CasoServico {
     // RN005: Trava para validar adição de prazos
     public void validarNovoPrazo(Caso caso) {
         if ("encerrado".equalsIgnoreCase(caso.getStatus()) || "excluido".equalsIgnoreCase(caso.getStatus())) {
-            throw new IllegalStateException("RN005: Não é possível cadastrar prazos em casos encerrados ou excluídos.");
+            throw new IllegalStateException("Não é possível cadastrar prazos em casos encerrados ou excluídos.");
         }
     }
 

@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 // O PrazoController gerencia as rotas HTTP para cadastro, listagem, edição e baixa de prazos dos casos jurídicos.
 @RestController
@@ -63,5 +64,36 @@ public class PrazoController {
     public ResponseEntity<?> cumprirPrazo(@PathVariable Long id) {
         Prazo prazoCumprido = prazoServico.marcarComoCumprido(id);
         return ResponseEntity.ok(prazoCumprido);
+    }
+
+    // RF012 / RF013 / RN015: Endpoint para buscar alertas categorizados do usuário
+    @GetMapping("/prazos/alertas")
+    public ResponseEntity<?> obterAlertas(@AuthenticationPrincipal UserDetails userDetails) {
+        Usuario usuarioLogado = usuarioServico.buscarPorEmail(userDetails.getUsername());
+        Map<String, Object> alertas = prazoServico.buscarAlertasDoUsuario(usuarioLogado);
+        return ResponseEntity.ok(alertas);
+    }
+
+    // ENDPOINT MANUAL DE TESTES (RN018): Força a execução imediata da varredura
+    @PostMapping("/prazos/executar-verificacao")
+    public ResponseEntity<?> dispararVerificacaoManual() {
+        Map<String, Object> resultado = prazoServico.executarVerificacaoPrazos();
+        return ResponseEntity.ok(resultado);
+    }
+
+    // RF014 / RN016: Salva os dias de antecedência no banco de dados
+    @PutMapping("/usuarios/preferencias")
+    public ResponseEntity<?> atualizarPreferenciasAntecedencia(
+            @RequestBody Map<String, Integer> payload,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Usuario usuarioLogado = usuarioServico.buscarPorEmail(userDetails.getUsername());
+        Integer dias = payload.get("diasAntecedencia");
+        Usuario atualizado = usuarioServico.atualizarDiasAntecedencia(usuarioLogado, dias);
+
+        return ResponseEntity.ok(Map.of(
+                "mensagem", "Preferência salva com sucesso!",
+                "diasAntecedencia", atualizado.getDiasAntecedencia()
+        ));
     }
 }
