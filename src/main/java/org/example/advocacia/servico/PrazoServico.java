@@ -24,9 +24,6 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-// O PrazoServico aplica as regras e validações do módulo de prazos.
-// Controla cadastros, edições, histórico de vencimentos, alteração de status e cálculo de dias úteis/corridos.
-
 @Service
 public class PrazoServico {
 
@@ -48,14 +45,12 @@ public class PrazoServico {
     // RN018: ROTINA DE VERIFICAÇÃO AUTOMÁTICA/CARD 05
     // ==========================================
 
-    // Executa diariamente à 01:00 AM
     @Scheduled(cron = "0 0 1 * * ?")
     public void verificarPrazosDiario() {
         log.info("Iniciando verificação diária agendada de prazos");
         executarVerificacaoPrazos();
     }
 
-    // Executa no arranque do servidor
     @EventListener(ApplicationReadyEvent.class)
     @Transactional
     public void verificarPrazosNoArranque() {
@@ -63,10 +58,8 @@ public class PrazoServico {
         executarVerificacaoPrazos();
     }
 
-    // Executa a varredura e contagem dos prazos
     @Transactional
     public Map<String, Object> executarVerificacaoPrazos() {
-        // Altera para usar a consulta com JOIN FETCH
         List<Prazo> pendentes = prazoRepository.findByStatusComCasoEUsuario(StatusPrazo.PENDENTE);
         LocalDate hoje = LocalDate.now();
 
@@ -140,7 +133,86 @@ public class PrazoServico {
     }
 
     // ==========================================
-    // MÉTODOS CRUD EXISTENTES
+    // RF015 / RN019 / RNF005: PAINEL CONSOLIDADO DE PRAZO/ CARD 06
+    // ==========================================
+    public Map<String, Object> obterPainelConsolidado(Usuario usuario, String filtroStatus) {
+        List<Prazo> todosPrazos = prazoRepository.findAllPrazosDoUsuarioOtimizado(usuario);
+        LocalDate hoje = LocalDate.now();
+        int antecedencia = (usuario.getDiasAntecedencia() != null) ? usuario.getDiasAntecedencia() : 3;
+
+        String filtroUpper = (filtroStatus != null) ? filtroStatus.toUpperCase() : "TODOS";
+        List<Map<String, Object>> listaFormatada = new ArrayList<>();
+
+        for (Prazo prazo : todosPrazos) {
+            String statusCalculado = calcularStatusCalculado(prazo, hoje, antecedencia);
+
+            if ("TODOS".equals(filtroUpper) || filtroUpper.equals(statusCalculado)) {
+                Map<String, Object> dto = new HashMap<>();
+                dto.put("id", prazo.getId());
+                dto.put("descricao", prazo.getDescricao());
+                dto.put("dias", prazo.getDias());
+                dto.put("dataVencimento", prazo.getDataVencimento());
+                dto.put("tipoContagem", prazo.getTipoContagem());
+                dto.put("statusOriginal", prazo.getStatus());
+                dto.put("statusCalculado", statusCalculado);
+                dto.put("dataCadastro", prazo.getDataCadastro());
+                dto.put("historico", prazo.getHistorico());
+
+                if (prazo.getCaso() != null) {
+                    Map<String, Object> casoDto = new HashMap<>();
+                    casoDto.put("id", prazo.getCaso().getId());
+                    casoDto.put("numeroProcesso", prazo.getCaso().getNumeroProcesso());
+                    casoDto.put("tipo", prazo.getCaso().getTipo());
+                    casoDto.put("descricao", prazo.getCaso().getDescricao());
+                    casoDto.put("status", prazo.getCaso().getStatus());
+                    dto.put("caso", casoDto);
+                }
+
+                listaFormatada.add(dto);
+            }
+        }
+
+        Map<String, Object> resposta = new HashMap<>();
+        resposta.put("prazos", listaFormatada);
+        resposta.put("filtroAplicado", filtroUpper);
+        resposta.put("diasAntecedenciaConfigurado", antecedencia);
+
+        return resposta;
+    }
+
+    private String calcularStatusCalculado(Prazo prazo, LocalDate hoje, int antecedencia) {
+        if (StatusPrazo.CUMPRIDO.equals(prazo.getStatus())) {
+            return "CUMPRIDO";
+        }
+        if (prazo.getDataVencimento() != null) {
+            if (prazo.getDataVencimento().isBefore(hoje)) {
+                return "VENCIDO";
+            }
+            long diasRestantes = ChronoUnit.DAYS.between(hoje, prazo.getDataVencimento());
+            if (diasRestantes <= antecedencia) {
+                return "PROXIMO";
+            }
+        }
+        return "EM_DIA";
+    }
+
+    // ==========================================
+    // RF017 / RN020: CONSULTA DE HISTÓRICO DE PRAZO/CARD 06
+    // ==========================================
+    public List<PrazoHistorico> obterHistoricoDoPrazo(Long prazoId, Usuario usuario) {
+        // Valida se o prazo existe e pertence ao usuário autenticado
+        Prazo prazo = prazoRepository.findById(prazoId)
+                .orElseThrow(() -> new IllegalArgumentException("Prazo não encontrado."));
+
+        if (!prazo.getCaso().getUsuario().getId().equals(usuario.getId())) {
+            throw new SecurityException("Acesso negado ao histórico deste prazo.");
+        }
+
+        return prazoHistoricoRepository.findByPrazoIdEUsuario(prazoId, usuario.getId());
+    }
+
+    // ==========================================
+    // MÉTODOS CRUD DE PRAZOS
     // ==========================================
 
     @Transactional
@@ -188,6 +260,7 @@ public class PrazoServico {
             throw new IllegalArgumentException("A nova data de vencimento não pode ser anterior à data de cadastro do prazo.");
         }
 
+        // RF017 / RN020: Grava automaticamente no histórico se a data de vencimento foi alterada
         if (!prazoExistente.getDataVencimento().equals(dadosAtualizados.getDataVencimento())) {
             PrazoHistorico historico = new PrazoHistorico(
                     prazoExistente.getDataVencimento(),

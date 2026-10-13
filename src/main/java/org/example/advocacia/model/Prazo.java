@@ -1,5 +1,6 @@
 package org.example.advocacia.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -8,6 +9,8 @@ import org.example.advocacia.model.enums.StatusPrazo;
 import org.example.advocacia.model.enums.TipoContagem;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 // A classe (Prazo.java) cria a tabela de prazos vinculados aos casos no banco de dados.
 @Entity
@@ -51,4 +54,10 @@ public class Prazo {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "caso_id", nullable = false)
     private Caso caso;
+
+    // RF017 / RN020: Mapeamento da coleção de histórico de alterações de data
+    @OneToMany(mappedBy = "prazo", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OrderBy("dataAlteracao DESC")
+    @JsonIgnoreProperties("prazo")
+    private List<PrazoHistorico> historico = new ArrayList<>();
 }

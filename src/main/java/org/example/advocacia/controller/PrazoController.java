@@ -2,6 +2,7 @@ package org.example.advocacia.controller;
 
 import jakarta.validation.Valid;
 import org.example.advocacia.model.Prazo;
+import org.example.advocacia.model.PrazoHistorico;
 import org.example.advocacia.model.Usuario;
 import org.example.advocacia.servico.PrazoServico;
 import org.example.advocacia.servico.UsuarioServico;
@@ -66,12 +67,35 @@ public class PrazoController {
         return ResponseEntity.ok(prazoCumprido);
     }
 
-    // RF012 / RF013 / RN015: Endpoint para buscar alertas categorizados do usuário
+    // RF012 / RF013 / RN015: Endpoint de alertas categorizados do usuário
     @GetMapping("/prazos/alertas")
     public ResponseEntity<?> obterAlertas(@AuthenticationPrincipal UserDetails userDetails) {
         Usuario usuarioLogado = usuarioServico.buscarPorEmail(userDetails.getUsername());
         Map<String, Object> alertas = prazoServico.buscarAlertasDoUsuario(usuarioLogado);
         return ResponseEntity.ok(alertas);
+    }
+
+    // RF015 / RN019: Endpoint do Painel Consolidado de Prazos com suporte a Filtro por Status
+    // Ex: GET /api/prazos/painel?status=VENCIDO
+    @GetMapping("/prazos/painel")
+    public ResponseEntity<?> obterPainelConsolidado(
+            @RequestParam(required = false, defaultValue = "TODOS") String status,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Usuario usuarioLogado = usuarioServico.buscarPorEmail(userDetails.getUsername());
+        Map<String, Object> painel = prazoServico.obterPainelConsolidado(usuarioLogado, status);
+        return ResponseEntity.ok(painel);
+    }
+
+    // RF017 / RN020: Consulta do histórico de alterações de um prazo (Somente Leitura)
+    @GetMapping("/prazos/{id}/historico")
+    public ResponseEntity<List<PrazoHistorico>> obterHistoricoPrazo(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Usuario usuarioLogado = usuarioServico.buscarPorEmail(userDetails.getUsername());
+        List<PrazoHistorico> historico = prazoServico.obterHistoricoDoPrazo(id, usuarioLogado);
+        return ResponseEntity.ok(historico);
     }
 
     // ENDPOINT MANUAL DE TESTES (RN018): Força a execução imediata da varredura

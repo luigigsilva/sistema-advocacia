@@ -1,5 +1,6 @@
 package org.example.advocacia.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
@@ -29,6 +30,7 @@ public class PrazoHistorico {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "prazo_id", nullable = false)
+    @JsonIgnore // RN020: Impede loop de referência circular no JSON
     private Prazo prazo;
 
     public PrazoHistorico(LocalDate dataAnterior, LocalDate novaData, Prazo prazo) {

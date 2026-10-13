@@ -13,6 +13,7 @@ import java.util.List;
 // O PrazoRepositorio realiza operações no banco de dados relacionadas aos prazos,
 // permitindo consultar prazos vinculados a um caso específico.
 public interface PrazoRepositorio extends JpaRepository<Prazo, Long> {
+
     List<Prazo> findByCaso(Caso caso);
     List<Prazo> findByCasoId(Long casoId);
 
@@ -23,4 +24,8 @@ public interface PrazoRepositorio extends JpaRepository<Prazo, Long> {
     // RN018: Busca prazos com JOIN FETCH evitando LazyInitializationException
     @Query("SELECT p FROM Prazo p JOIN FETCH p.caso c JOIN FETCH c.usuario u WHERE p.status = :status")
     List<Prazo> findByStatusComCasoEUsuario(@Param("status") StatusPrazo status);
+
+    // RF015 / RNF005: Busca TODOS os prazos do usuário (PENDENTES e CUMPRIDOS) de forma otimizada em 1 SQL
+    @Query("SELECT DISTINCT p FROM Prazo p JOIN FETCH p.caso c JOIN FETCH c.usuario u LEFT JOIN FETCH p.historico h WHERE u = :usuario ORDER BY p.dataVencimento ASC")
+    List<Prazo> findAllPrazosDoUsuarioOtimizado(@Param("usuario") Usuario usuario);
 }
