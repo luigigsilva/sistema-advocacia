@@ -3,57 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro - Escritório de Advocacia</title>
+    <title>Cadastro - JURISYNC</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="page-cadastro">
-<div class="main-container">
-    <div class="card-register">
-        <div class="header-card">
-            <h1>JuriSync</h1>
-            <p>Crie sua conta para acompanhar e gerenciar seus processos</p>
+<body class="page-login-split">
+
+<div class="login-wrapper-fullscreen">
+    <!-- LADO ESQUERDO: Painel Dourado Escuro com Esferas Translúcidas -->
+    <div class="auth-art-panel-gold">
+        <div class="art-overlay-content">
+            <div class="auth-tag">NOVO ACESSO</div>
+            <h1 class="art-main-title">Acelere seu fluxo pericial com organização absoluta.</h1>
+            <p class="art-main-desc">Cadastre-se para obter acesso completo ao ecossistema JURISYNC. Gerencie prazos periciais, controle anexos e mantenha o histórico de laudos sempre protegido.</p>
         </div>
 
-        <div id="msg-erro" style="display: none; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; font-size: 12px; margin-bottom: 15px;">
-            <span id="texto-erro">Erro no cadastro.</span>
+        <div class="art-footer-brand">
+            <span>⚖️ JURISYNC &bull; Gestão Pericial Inteligente</span>
         </div>
+    </div>
 
-        <form id="registerForm" action="/cadastrar" method="POST" class="form-register">
-            <div class="form-group">
-                <label for="nome">Nome completo</label>
-                <input type="text" id="nome" name="nome" required autocomplete="name">
+    <!-- LADO DIREITO: Painel Escuro de Formulário de Cadastro -->
+    <div class="auth-form-panel-dark">
+        <div class="card-container-dark">
+            <!-- Nome/Logo no Canto Superior Direito -->
+            <div class="brand-right-corner">
+                <span class="art-corner-icon">⚖️</span>
+                <span class="art-corner-title">JURISYNC</span>
             </div>
 
-            <div class="form-group">
-                <label for="email">E-mail</label>
-                <input type="email" id="email" name="email" required autocomplete="email">
+            <h1 class="welcome-title">Criar Conta</h1>
+            <p class="form-subheading">Preencha os dados abaixo para se cadastrar na plataforma.</p>
+
+            <div id="msg-erro" style="display: none; background-color: #3d1418; color: #f87171; border: 1px solid #7f1d1d; padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 20px; text-align: left;">
+                <span id="texto-erro">Erro no cadastro.</span>
             </div>
 
-            <div class="form-group">
-                <label for="senha">Senha</label>
-                <input type="password" id="senha" name="senha" required>
-
-                <div id="meter-container" style="display: none; margin-top: 8px;">
-                    <div style="width: 40%; height: 5px; background-color: #333333; border-radius: 3px; overflow: hidden; margin-left: 0;">
-                        <div id="meter-fill" style="height: 100%; width: 0%; transition: width 0.3s ease, background-color 0.3s ease; border-radius: 3px;"></div>
-                    </div>
-                    <span id="meter-text" style="display: block; margin-top: 5px; font-size: 12px; font-weight: 500; text-align: left;"></span>
+            <form id="registerForm" action="/cadastrar" method="POST" class="form-register">
+                <div class="input-group">
+                    <label for="nome">Nome completo</label>
+                    <input type="text" id="nome" name="nome" required autocomplete="name">
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label for="confirmarSenha">Confirmar Senha</label>
-                <input type="password" id="confirmarSenha" name="confirmarSenha" required>
-            </div>
+                <div class="input-group">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" name="email" required autocomplete="email">
+                </div>
 
-            <button type="submit" class="btn-submit">Criar Conta</button>
-        </form>
+                <div class="input-group">
+                    <label for="senha">Senha</label>
+                    <input type="password" id="senha" name="senha" required >
 
-        <div class="footer-card">
-            <p>Já possui uma conta? <a href="login.html">Faça login</a></p>
+                    <div id="meter-container" style="display: none; margin-top: 8px;">
+                        <div style="width: 100%; height: 5px; background-color: #24272b; border-radius: 3px; overflow: hidden; border: 1px solid #363a40;">
+                            <div id="meter-fill" style="height: 100%; width: 0%; transition: width 0.3s ease, background-color 0.3s ease; border-radius: 3px;"></div>
+                        </div>
+                        <span id="meter-text" style="display: block; margin-top: 5px; font-size: 11px; font-weight: 500; text-align: left;"></span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="confirmarSenha">Confirmar Senha</label>
+                    <input type="password" id="confirmarSenha" name="confirmarSenha" required >
+                </div>
+
+                <button type="submit" class="btn-entrar-gold">Finalizar Cadastro &rarr;</button>
+            </form>
+
+            <p class="text-cadastro-dark">Já possui uma conta? <a href="login.html">Faça login</a></p>
         </div>
     </div>
 </div>
@@ -98,7 +117,7 @@
                 }
                 if (meterText) {
                     meterText.textContent = 'Fraca (requer caractere especial !@#$%^&*)';
-                    meterText.style.color = '#dc3545';
+                    meterText.style.color = '#f87171';
                 }
             }
             else if (val.length < 6) {
@@ -108,7 +127,7 @@
                 }
                 if (meterText) {
                     meterText.textContent = 'Fraca (mínimo 6 caracteres)';
-                    meterText.style.color = '#dc3545';
+                    meterText.style.color = '#f87171';
                 }
             }
             else if (val.length >= 8 && temEspecial && temLetra && temNumero) {
@@ -118,7 +137,7 @@
                 }
                 if (meterText) {
                     meterText.textContent = 'Forte';
-                    meterText.style.color = '#28a745';
+                    meterText.style.color = '#4ade80';
                 }
             }
             else {
@@ -128,7 +147,7 @@
                 }
                 if (meterText) {
                     meterText.textContent = 'Média';
-                    meterText.style.color = '#ffc107';
+                    meterText.style.color = '#facc15';
                 }
             }
         });

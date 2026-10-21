@@ -50,6 +50,45 @@ function escaparHTML(str) {
 }
 
 // ==========================================
+// MÓDULO DE TEMA (CLARO / ESCURO) & SIDEBAR
+// ==========================================
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) {
+        sidebar.classList.toggle('expanded');
+    }
+}
+
+function aplicarTema(tema) {
+    const icon = document.getElementById('themeIcon');
+    const text = document.getElementById('themeText');
+
+    if (tema === 'dark') {
+        document.body.classList.add('dark-theme');
+        if (icon) icon.textContent = '☀️';
+        if (text) text.textContent = 'Modo Claro';
+    } else {
+        document.body.classList.remove('dark-theme');
+        if (icon) icon.textContent = '🌙';
+        if (text) text.textContent = 'Modo Escuro';
+    }
+
+    localStorage.setItem('jurisync_tema', tema);
+}
+
+function alternarTema() {
+    const temaAtual = localStorage.getItem('jurisync_tema') === 'dark' ? 'dark' : 'light';
+    const novoTema = temaAtual === 'dark' ? 'light' : 'dark';
+    aplicarTema(novoTema);
+}
+
+function inicializarTema() {
+    const temaSalvo = localStorage.getItem('jurisync_tema') || 'light';
+    aplicarTema(temaSalvo);
+}
+
+// ==========================================
 // CONFIGURAÇÃO DE ANTECEDÊNCIA (RF014 / RN016)
 // ==========================================
 
@@ -117,12 +156,16 @@ function calcularStatusPrazo(prazo) {
 // ==========================================
 let casos = [];
 let prazos = [];
+let documentosDoCaso = [];
+let casoAtualDocumentos = null;
 let modoEdicaoCaso = false;
 let processoSendoEditado = "";
 let statusSendoEditado = "ATIVO";
 let prazoEmEdicao = null;
 
 document.addEventListener('DOMContentLoaded', () => {
+    inicializarTema();
+
     const inputProcesso = document.getElementById('processo');
     if (inputProcesso) {
         inputProcesso.addEventListener('input', aplicarMascaraCNJ);
@@ -136,6 +179,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const formPrazo = document.getElementById('form-prazo');
     if (formPrazo) {
         formPrazo.addEventListener('submit', salvarPrazo);
+    }
+
+    const formDocumento = document.getElementById('form-documento');
+    if (formDocumento) {
+        formDocumento.addEventListener('submit', adicionarDocumento);
     }
 
     const inputDias = document.getElementById('diasPrazo');
@@ -173,10 +221,12 @@ async function carregarCasosDoServidor() {
 
                         const prazosServidor = Array.isArray(cServidor.prazos) && cServidor.prazos.length > 0 ? cServidor.prazos : null;
                         const prazosLocais = casoExistente ? casoExistente.prazos : [];
+                        const docsLocais = casoExistente ? casoExistente.documentos : [];
 
                         return {
                             ...cServidor,
-                            prazos: prazosServidor || prazosLocais
+                            prazos: prazosServidor || prazosLocais,
+                            documentos: cServidor.documentos || docsLocais || []
                         };
                     }),
                     ...casosLocaisNaoSincronizados
@@ -201,7 +251,7 @@ function renderTabelaCasos() {
     if (!casos || casos.length === 0) {
         tbody.innerHTML = `
             <tr id="mensagem-vazio">
-                <td colspan="4" style="text-align: center; padding: 40px; color: #666; font-style: italic;">
+                <td colspan="4" style="text-align: center; padding: 40px; font-style: italic;">
                     Você não tem nenhum protocolo cadastrado.
                 </td>
             </tr>
@@ -220,6 +270,7 @@ function renderTabelaCasos() {
 
         let acoesHTML = `
             <a href="#" class="link-acao" onclick="abrirModalPrazos('${numProcessoLimpo}')">Prazos</a>
+            <a href="#" class="link-acao" onclick="abrirModalDocumentos('${numProcessoLimpo}')">Anexos</a>
             <a href="#" class="link-acao" onclick="editarCaso('${numProcessoLimpo}')">Editar</a>
             <a href="#" class="link-acao" onclick="consultarCaso('${numProcessoLimpo}')">Consultar</a>
         `;
@@ -396,6 +447,7 @@ async function salvarCaso(event) {
         : casos.find(c => (c.numeroProcesso || c.processo || '').replace(/\D/g, '') === numerosApenas);
 
     const prazosGuardados = casoExistente ? (casoExistente.prazos || []) : [];
+    const docsGuardados = casoExistente ? (casoExistente.documentos || []) : [];
 
     const payloadBackend = {
         tipo: tipoVal,
@@ -412,7 +464,8 @@ async function salvarCaso(event) {
     const payloadLocal = {
         ...payloadBackend,
         id: casoIdVal ? converterIdSeguro(casoIdVal) : Date.now(),
-        prazos: prazosGuardados
+        prazos: prazosGuardados,
+        documentos: docsGuardados
     };
 
     const idx = (modoEdicaoCaso && casoIdVal)
@@ -446,13 +499,6 @@ async function salvarCaso(event) {
                 const idxLocal = casos.findIndex(c => (c.numeroProcesso || c.processo || '').replace(/\D/g, '') === numerosApenas);
                 if (idxLocal >= 0) {
                     casos[idxLocal].id = idServidorSeguro;
-                    if (prazosGuardados && prazosGuardados.length > 0) {
-                        casos[idxLocal].prazos = prazosGuardados.map(p => ({
-                            ...p,
-                            casoId: idServidorSeguro,
-                            caso: { id: idServidorSeguro }
-                        }));
-                    }
                 }
                 renderTabelaCasos();
             }
@@ -617,6 +663,13 @@ function limparFormularioPrazo() {
     document.getElementById('modal-prazo-erro').innerHTML = '';
 }
 
+function mostrarErroPrazo(mensagem, bg = "#f8d7da", color = "#721c24", border = "#f5c6cb") {
+    const el = document.getElementById('modal-prazo-erro');
+    if (el) {
+        el.innerHTML = `<div class="erro-box" style="background-color: ${bg}; color: ${color}; border-color: ${border};">${mensagem}</div>`;
+    }
+}
+
 async function carregarPrazosDoCaso(caso) {
     prazos = caso.prazos || [];
 
@@ -646,7 +699,7 @@ function renderTabelaPrazos() {
     if (!prazos || prazos.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="5" style="text-align: center; padding: 20px; color: #777; font-style: italic;">
+                <td colspan="5" style="text-align: center; padding: 20px; font-style: italic;">
                     Nenhum prazo cadastrado para este caso.
                 </td>
             </tr>
@@ -855,114 +908,221 @@ async function salvarPrazo(e) {
         });
     }
 
-    const payloadBackendPrazo = {
-        caso: { id: converterIdSeguro(casoIdVal) },
+    const novoPrazo = {
+        id: prazoIdVal ? converterIdSeguro(prazoIdVal) : Date.now(),
         casoId: converterIdSeguro(casoIdVal),
         descricao: descVal,
-        dias: diasVal ? parseInt(diasVal, 10) : null,
         dataVencimento: dataVencimentoVal,
+        dataCadastro: dataCadastroRef,
         tipoContagem: tipoContagemVal,
-        formaContagem: tipoContagemVal,
-        status: prazoEmEdicao ? (prazoEmEdicao.status || 'PENDENTE').toUpperCase() : 'PENDENTE',
-        cumprido: prazoEmEdicao ? (prazoEmEdicao.cumprido || false) : false,
-        dataCadastro: prazoEmEdicao ? prazoEmEdicao.dataCadastro : hojeStr,
+        dias: diasVal ? parseInt(diasVal, 10) : null,
+        status: prazoEmEdicao ? prazoEmEdicao.status : 'EM_DIA',
         historico: historicoAtualizado
     };
 
     if (prazoIdVal) {
-        payloadBackendPrazo.id = converterIdSeguro(prazoIdVal);
-    }
-
-    const payloadPrazoLocal = {
-        ...payloadBackendPrazo,
-        id: prazoIdVal ? converterIdSeguro(prazoIdVal) : Date.now()
-    };
-
-    if (!casoEncontrado.prazos) casoEncontrado.prazos = [];
-
-    const idx = casoEncontrado.prazos.findIndex(p => String(p.id) === String(payloadPrazoLocal.id));
-    if (idx >= 0) {
-        casoEncontrado.prazos[idx] = payloadPrazoLocal;
+        const idxP = casoEncontrado.prazos.findIndex(p => String(p.id) === String(prazoIdVal));
+        if (idxP >= 0) casoEncontrado.prazos[idxP] = novoPrazo;
     } else {
-        casoEncontrado.prazos.push(payloadPrazoLocal);
+        if (!casoEncontrado.prazos) casoEncontrado.prazos = [];
+        casoEncontrado.prazos.push(novoPrazo);
     }
 
     prazos = casoEncontrado.prazos;
-
-    limparFormularioPrazo();
     renderTabelaPrazos();
+    limparFormularioPrazo();
 
     try {
         const urlDestino = prazoIdVal ? `/api/prazos/${prazoIdVal}` : `/api/casos/${casoIdVal}/prazos`;
         const metodoHttp = prazoIdVal ? 'PUT' : 'POST';
 
-        const resposta = await fetch(urlDestino, {
+        await fetch(urlDestino, {
             method: metodoHttp,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payloadBackendPrazo)
+            body: JSON.stringify(novoPrazo)
         });
-
-        if (resposta.ok) {
-            const prazoBackend = await resposta.json();
-            if (prazoBackend && prazoBackend.id) {
-                const pos = casoEncontrado.prazos.findIndex(p => String(p.id) === String(payloadPrazoLocal.id));
-                if (pos >= 0) {
-                    casoEncontrado.prazos[pos] = prazoBackend;
-                    prazos = casoEncontrado.prazos;
-                    renderTabelaPrazos();
-                }
-            }
-        }
-    } catch (erro) {
-        console.warn("Servidor offline. Prazo mantido localmente.");
+    } catch (err) {
+        console.warn("Backend de prazos indisponível, gravado localmente.");
     }
 }
 
-function mostrarErroPrazo(mensagem, bg = "#f8d7da", color = "#721c24", border = "#f5c6cb") {
-    const divErro = document.getElementById('modal-prazo-erro');
-    if (divErro) {
-        divErro.innerHTML = `
-            <div class="erro-box" style="background-color: ${bg}; color: ${color}; border-color: ${border}; margin-bottom: 15px;">
-                ${mensagem}
-            </div>
+// ==========================================
+// SPRINT 7: GERENCIAMENTO DE DOCUMENTOS (ANEXOS)
+// ==========================================
+
+async function abrirModalDocumentos(numeroProcesso) {
+    const numLimpo = String(numeroProcesso).replace(/\D/g, '');
+    casoAtualDocumentos = casos.find(c => (c.numeroProcesso || c.processo || '').replace(/\D/g, '') === numLimpo);
+
+    if (!casoAtualDocumentos) {
+        alert("Erro: Caso não encontrado.");
+        return;
+    }
+
+    if (!casoAtualDocumentos.documentos) {
+        casoAtualDocumentos.documentos = [];
+    }
+
+    documentosDoCaso = casoAtualDocumentos.documentos.filter(d => !d.removido);
+
+    const elTitulo = document.getElementById('titulo-modal-documentos');
+    if (elTitulo) elTitulo.innerText = `Documentos - Proc: ${formatarCNJ(numLimpo)}`;
+
+    const modal = document.getElementById('modal-documentos');
+    if (modal) modal.style.display = 'flex';
+
+    const isEncerrado = (casoAtualDocumentos.status || '').toUpperCase() === 'ENCERRADO';
+    const formDoc = document.getElementById('form-documento');
+    if (formDoc) {
+        formDoc.style.display = isEncerrado ? 'none' : 'block';
+    }
+
+    renderTabelaDocumentos();
+}
+
+function fecharModalDocumentos() {
+    const modal = document.getElementById('modal-documentos');
+    if (modal) modal.style.display = 'none';
+    const formDoc = document.getElementById('form-documento');
+    if (formDoc) formDoc.reset();
+}
+
+function renderTabelaDocumentos() {
+    const tbody = document.getElementById('tabela-corpo-documentos');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    const docsAtivos = documentosDoCaso.filter(d => !d.removido);
+
+    if (docsAtivos.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; font-style:italic;">Nenhum documento anexado.</td></tr>`;
+        return;
+    }
+
+    const isEncerrado = casoAtualDocumentos && (casoAtualDocumentos.status || '').toUpperCase() === 'ENCERRADO';
+
+    docsAtivos.forEach(doc => {
+        const tr = document.createElement('tr');
+        const dataUpload = doc.dataUpload ? formatarDataHoraBR(doc.dataUpload) : '-';
+        const idEscapado = escaparHTML(String(doc.id));
+
+        let acoesHTML = `
+            <a href="#" class="link-acao-prazo" style="color: #17a2b8;" onclick="visualizarDocumento('${idEscapado}')">👁 Ver</a>
+            <a href="#" class="link-acao-prazo" style="color: #28a745;" onclick="baixarDocumento('${idEscapado}')">⬇ Baixar</a>
         `;
+
+        if (!isEncerrado) {
+            acoesHTML += `<a href="#" class="link-acao-prazo" style="color: #dc3545;" onclick="removerDocumento('${idEscapado}')">🗑 Remover</a>`;
+        }
+
+        tr.innerHTML = `
+            <td>${escaparHTML(doc.nomeOriginal || doc.nome)}</td>
+            <td>${escaparHTML((doc.tamanhoKB || 0) + ' KB')}</td>
+            <td>${escaparHTML(dataUpload)}</td>
+            <td class="td-acoes-prazos"><div class="acoes-container-prazos">${acoesHTML}</div></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+async function adicionarDocumento(e) {
+    e.preventDefault();
+
+    const inputArquivo = document.getElementById('arquivoAnexo');
+    if (!inputArquivo || !inputArquivo.files || inputArquivo.files.length === 0) {
+        alert("Selecione um arquivo para anexar.");
+        return;
+    }
+
+    const arquivo = inputArquivo.files[0];
+    const tamanhoMaximo = 5 * 1024 * 1024; // Limitador de 5MB
+
+    if (arquivo.size > tamanhoMaximo) {
+        alert("Erro: O arquivo selecionado excede o tamanho máximo de 5MB.");
+        return;
+    }
+
+    const extensoesPermitidas = ['pdf', 'png', 'jpg', 'jpeg'];
+    const extensao = arquivo.name.split('.').pop().toLowerCase();
+
+    if (!extensoesPermitidas.includes(extensao)) {
+        alert("Erro: Formato inválido. Permite-se apenas PDF, PNG ou JPG.");
+        return;
+    }
+
+    const leitor = new FileReader();
+    leitor.onload = async function (evt) {
+        const conteudoBase64 = evt.target.result;
+
+        const novoDoc = {
+            id: Date.now(),
+            nomeOriginal: arquivo.name,
+            tamanhoKB: Math.round(arquivo.size / 1024),
+            mimeType: arquivo.type,
+            dataUpload: new Date().toISOString(),
+            conteudo: conteudoBase64,
+            removido: false
+        };
+
+        if (!casoAtualDocumentos.documentos) {
+            casoAtualDocumentos.documentos = [];
+        }
+
+        casoAtualDocumentos.documentos.push(novoDoc);
+        documentosDoCaso = casoAtualDocumentos.documentos;
+
+        renderTabelaDocumentos();
+        inputArquivo.value = '';
+        alert("Documento anexado com sucesso!");
+    };
+
+    leitor.readAsDataURL(arquivo);
+}
+
+function visualizarDocumento(docId) {
+    const doc = documentosDoCaso.find(d => String(d.id) === String(docId));
+    if (!doc || !doc.conteudo) return;
+
+    const win = window.open();
+    if (win) {
+        win.document.write(`<iframe src="${doc.conteudo}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+    }
+}
+
+function baixarDocumento(docId) {
+    const doc = documentosDoCaso.find(d => String(d.id) === String(docId));
+    if (!doc || !doc.conteudo) return;
+
+    const link = document.createElement('a');
+    link.href = doc.conteudo;
+    link.download = doc.nomeOriginal || 'documento';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function removerDocumento(docId) {
+    const doc = documentosDoCaso.find(d => String(d.id) === String(docId));
+    if (!doc) return;
+
+    if (confirm(`Tem certeza que deseja remover o documento "${doc.nomeOriginal}"?`)) {
+        doc.removido = true;
+        doc.dataRemocao = new Date().toISOString();
+        renderTabelaDocumentos();
     }
 }
 
 // ==========================================
-// PAINEL CONSOLIDADO DE PRAZOS
+// MÓDULOS DE MODAIS ADICIONAIS (PAINEL GERAL E HISTÓRICO)
 // ==========================================
-
-let prazosConsolidados = [];
-
-function obterTodosOsPrazosConsolidados() {
-    const lista = [];
-    casos.forEach(caso => {
-        const cnjFormatado = formatarCNJ((caso.numeroProcesso || caso.processo || '').replace(/\D/g, ''));
-        if (Array.isArray(caso.prazos)) {
-            caso.prazos.forEach(prazo => {
-                lista.push({
-                    ...prazo,
-                    numeroProcesso: cnjFormatado,
-                    statusCalculado: calcularStatusPrazo(prazo)
-                });
-            });
-        }
-    });
-    return lista;
-}
 
 function abrirPainelGeralPrazos() {
     const modal = document.getElementById('modal-painel-geral');
-    if (!modal) return;
-
-    prazosConsolidados = obterTodosOsPrazosConsolidados();
-    
-    const filtroSelect = document.getElementById('filtroStatusPainel');
-    if (filtroSelect) filtroSelect.value = 'TODOS';
-
-    renderTabelaPainelGeral(prazosConsolidados);
-    modal.style.display = 'flex';
+    if (modal) {
+        modal.style.display = 'flex';
+        renderPainelGeralPrazos();
+    }
 }
 
 function fecharModalPainelGeral() {
@@ -970,108 +1130,65 @@ function fecharModalPainelGeral() {
     if (modal) modal.style.display = 'none';
 }
 
-function filtrarPainelPrazos() {
-    const filtro = document.getElementById('filtroStatusPainel').value;
-    
-    if (filtro === 'TODOS') {
-        renderTabelaPainelGeral(prazosConsolidados);
-        return;
-    }
-
-    const filtrados = prazosConsolidados.filter(prazo => prazo.statusCalculado === filtro);
-    renderTabelaPainelGeral(filtrados);
-}
-
-function renderTabelaPainelGeral(listaPrazos) {
+function renderPainelGeralPrazos() {
     const tbody = document.getElementById('tabela-corpo-painel-geral');
+    const filtroEl = document.getElementById('filtroStatusPainel');
     if (!tbody) return;
 
+    const filtro = filtroEl ? filtroEl.value : 'TODOS';
     tbody.innerHTML = '';
 
-    if (!listaPrazos || listaPrazos.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5" style="text-align: center; padding: 30px; color: #777; font-style: italic;">
-                    Nenhum prazo encontrado para os filtros selecionados.
-                </td>
-            </tr>
-        `;
+    let todosOsPrazos = [];
+
+    casos.forEach(caso => {
+        if (caso.prazos && caso.prazos.length > 0) {
+            caso.prazos.forEach(prazo => {
+                todosOsPrazos.push({
+                    ...prazo,
+                    numeroProcesso: caso.numeroProcesso || caso.processo || ''
+                });
+            });
+        }
+    });
+
+    if (todosOsPrazos.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; font-style:italic;">Nenhum prazo cadastrado na base.</td></tr>`;
         return;
     }
 
-    listaPrazos.forEach(prazo => {
+    todosOsPrazos.forEach(prazo => {
+        const statusCalculado = calcularStatusPrazo(prazo);
+
+        if (filtro !== 'TODOS' && statusCalculado !== filtro) return;
+
         const tr = document.createElement('tr');
-        
-        let classeLinha = '';
-        let badgeClass = '';
-        let statusTexto = '';
-
-        switch (prazo.statusCalculado) {
-            case 'CUMPRIDO':
-                classeLinha = 'linha-cumprido';
-                badgeClass = 'badge-encerrado';
-                statusTexto = 'Cumprido';
-                break;
-            case 'VENCIDO':
-                classeLinha = 'linha-vencido';
-                badgeClass = 'badge-danger';
-                statusTexto = 'VENCIDO';
-                break;
-            case 'PROXIMO':
-                classeLinha = 'linha-proximo';
-                badgeClass = 'badge-warning';
-                statusTexto = 'Atenção';
-                break;
-            default:
-                classeLinha = '';
-                badgeClass = 'badge-ativo';
-                statusTexto = 'Em dia';
-                break;
-        }
-
-        tr.className = classeLinha;
-
         const dataVencStr = prazo.dataVencimento ? prazo.dataVencimento.split('T')[0] : '';
         const partesData = dataVencStr.split('-');
         const dataFormatada = partesData.length === 3 ? `${partesData[2]}/${partesData[1]}/${partesData[0]}` : dataVencStr;
-        const idEscapado = escaparHTML(String(prazo.id));
+
+        let badgeClass = 'badge-ativo';
+        if (statusCalculado === 'VENCIDO') badgeClass = 'badge-danger';
+        else if (statusCalculado === 'PROXIMO') badgeClass = 'badge-warning';
+        else if (statusCalculado === 'CUMPRIDO') badgeClass = 'badge-encerrado';
 
         tr.innerHTML = `
-            <td>${escaparHTML(prazo.numeroProcesso)}</td>
+            <td>${escaparHTML(formatarCNJ(prazo.numeroProcesso))}</td>
             <td>${escaparHTML(prazo.descricao)}</td>
             <td>${escaparHTML(dataFormatada)}</td>
-            <td><span class="badge ${badgeClass}">${escaparHTML(statusTexto)}</span></td>
-            <td class="td-acoes-prazos">
-                <div class="acoes-container-prazos">
-                    <a href="#" class="link-acao-prazo" style="color: #6c757d;" onclick="abrirModalHistoricoPrazo('${idEscapado}')">📜 Histórico</a>
-                </div>
-            </td>
+            <td><span class="badge ${badgeClass}">${escaparHTML(statusCalculado)}</span></td>
+            <td><a href="#" class="link-acao-prazo" onclick="fecharModalPainelGeral(); abrirModalPrazos('${prazo.numeroProcesso}')">Acessar Caso</a></td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-// ==========================================
-// CONSULTA DE HISTÓRICO DE ALTERAÇÕES
-// ==========================================
+function filtrarPainelPrazos() {
+    renderPainelGeralPrazos();
+}
 
 function abrirModalHistoricoPrazo(prazoId) {
-    let prazoEncontrado = null;
-
-    for (const caso of casos) {
-        if (Array.isArray(caso.prazos)) {
-            const p = caso.prazos.find(item => String(item.id) === String(prazoId));
-            if (p) {
-                prazoEncontrado = p;
-                break;
-            }
-        }
-    }
-
-    if (!prazoEncontrado) {
-        alert("Erro: Prazo não encontrado para carregar o histórico.");
-        return;
-    }
+    const prazo = prazos.find(p => String(p.id) === String(prazoId));
+    if (!prazo) return;
 
     const modal = document.getElementById('modal-historico-prazo');
     const subtitulo = document.getElementById('subtitulo-historico');
@@ -1079,31 +1196,20 @@ function abrirModalHistoricoPrazo(prazoId) {
 
     if (!modal || !tbody) return;
 
-    subtitulo.innerText = `Histórico do Prazo: "${prazoEncontrado.descricao}"`;
+    subtitulo.textContent = `Histórico de renegociações do prazo: "${prazo.descricao}"`;
     tbody.innerHTML = '';
 
-    const historico = prazoEncontrado.historico || [];
+    const historico = prazo.historico || [];
 
     if (historico.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="3" style="text-align: center; padding: 25px; color: #777; font-style: italic;">
-                    Nenhuma alteração registrada para este prazo.
-                </td>
-            </tr>
-        `;
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px; font-style:italic;">Nenhuma alteração registrada para este prazo.</td></tr>`;
     } else {
         historico.forEach(item => {
             const tr = document.createElement('tr');
-
-            const dtAnt = item.dataAnterior ? item.dataAnterior.split('-').reverse().join('/') : '-';
-            const dtNova = item.novaData ? item.novaData.split('-').reverse().join('/') : '-';
-            const dtAlt = formatarDataHoraBR(item.dataAlteracao);
-
             tr.innerHTML = `
-                <td>${escaparHTML(dtAnt)}</td>
-                <td><strong>${escaparHTML(dtNova)}</strong></td>
-                <td>${escaparHTML(dtAlt)}</td>
+                <td>${escaparHTML(item.dataAnterior || '-')}</td>
+                <td>${escaparHTML(item.novaData || '-')}</td>
+                <td>${escaparHTML(formatarDataHoraBR(item.dataAlteracao))}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -1115,14 +1221,4 @@ function abrirModalHistoricoPrazo(prazoId) {
 function fecharModalHistorico() {
     const modal = document.getElementById('modal-historico-prazo');
     if (modal) modal.style.display = 'none';
-}
-
-// ==========================================
-// CONTROLE DO MENU LATERAL (SIDEBAR RETRÁTIL)
-// ==========================================
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    if (sidebar) {
-        sidebar.classList.toggle('expanded');
-    }
 }

@@ -3,34 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Advocacia</title>
+    <title>Login - JURISYNC</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="page-login-split">
 
-<div class="card-container">
-    <h1>JURISYNC</h1>
-
-    <div id="container-erro"></div>
-
-    <form id="form-login" action="/login" method="POST">
-        <div class="input-group">
-            <label for="email">E-mail</label>
-            <input type="email" id="email" name="username" required placeholder="seuemail@exemplo.com">
+<div class="login-wrapper-fullscreen">
+    <!-- LADO ESQUERDO: Painel Estilo Card de Apresentação -->
+    <div class="auth-art-panel-gold">
+        <div class="art-overlay-content">
+            <div class="auth-tag">PAINEL PERICIAL</div>
+            <h1 class="art-main-title">Sua gestão pericial com precisão e controle, em um só lugar.</h1>
+            <p class="art-main-desc">Consulte laudos, controle contagem de prazos em tempo real, anexe documentos com segurança e acesse o histórico de todos os seus processos periciais.</p>
         </div>
 
-        <div class="input-group">
-            <label for="senha">Senha</label>
-            <input type="password" id="senha" name="password" required placeholder="Digite sua senha">
-            <div class="esqueceu-senha">
-                <a href="recuperar-senha.html">Esqueceu sua senha?</a>
+        <div class="art-footer-brand">
+            <span>⚖️ JURISYNC &bull; Gestão Pericial Inteligente</span>
+        </div>
+    </div>
+
+    <!-- LADO DIREITO: Formulario de Login -->
+    <div class="auth-form-panel-dark">
+        <div class="card-container-dark">
+            <!-- Nome/Logo no Canto Direiro Superior do Card -->
+            <div class="brand-right-corner">
+                <span class="art-corner-icon">⚖️</span>
+                <span class="art-corner-title">JURISYNC</span>
             </div>
+
+            <h1 class="welcome-title">Bem-Vindo!</h1>
+            <p class="form-subheading">Acesse sua conta para gerenciar seus casos periciais e acompanhar seus prazos.</p>
+
+            <div id="container-erro"></div>
+
+            <form id="form-login" action="/login" method="POST">
+                <div class="input-group">
+                    <label for="email">E-mail ou Usuário</label>
+                    <input type="email" id="email" name="username" required placeholder="Digite seu e-mail">
+                </div>
+
+                <div class="input-group">
+                    <label for="senha">Senha</label>
+                    <input type="password" id="senha" name="password" required placeholder="Digite sua senha">
+                    <div class="esqueceu-senha">
+                        <a href="recuperar-senha.html">Esqueceu sua senha?</a>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-entrar-gold">Entrar &rarr;</button>
+            </form>
+
+            <p class="text-cadastro-dark">Ainda não possui conta? <a href="cadastro.html">Cadastre-se</a></p>
         </div>
-
-        <button type="submit" class="btn-entrar">Entrar</button>
-    </form>
-
-    <p><a href="cadastro.html">Não tenho conta (Cadastre-se)</a></p>
+    </div>
 </div>
 
 <script>
@@ -38,7 +66,7 @@
         const container = document.getElementById('container-erro');
         if (container) {
             container.innerHTML = `
-                <div style="background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; font-size: 12px; margin-bottom: 15px;">
+                <div style="background-color: #3d1418; color: #f87171; border: 1px solid #7f1d1d; padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 15px; text-align: left;">
                     ${mensagem}
                 </div>
             `;

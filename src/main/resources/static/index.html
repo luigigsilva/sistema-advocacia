@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Casos - JURISYNC</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -34,6 +37,12 @@
             </nav>
 
             <div class="sidebar-footer">
+                <!-- BOTÃO ALTERNADOR DE TEMA (CLARO / ESCURO) -->
+                <button class="btn-theme-toggle" id="btnThemeToggle" onclick="alternarTema()" title="Alternar Tema Claro/Escuro">
+                    <span class="nav-icon" id="themeIcon">🌙</span>
+                    <span class="nav-label" id="themeText">Modo Escuro</span>
+                </button>
+
                 <a href="/logout" class="btn-logout" title="Sair do Sistema">
                     <span class="nav-icon">🚪</span>
                     <span class="nav-label">Sair do Sistema</span>
