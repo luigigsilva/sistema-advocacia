@@ -92,12 +92,31 @@ function inicializarTema() {
 // CONFIGURAÇÃO DE ANTECEDÊNCIA (RF014 / RN016)
 // ==========================================
 
-function obterDiasAntecedencia() {
-    const config = localStorage.getItem('jurisync_antecedencia_dias');
-    return config !== null ? parseInt(config, 10) : 3;
+let diasAntecedenciaUsuario = 3;
+
+async function carregarPreferenciasDoUsuario() {
+    try {
+        const resposta = await fetch('/api/prazos/alertas');
+        if (resposta.ok) {
+            const dados = await resposta.json();
+            if (dados && dados.diasAntecedenciaConfigurado !== undefined) {
+                diasAntecedenciaUsuario = parseInt(dados.diasAntecedenciaConfigurado, 10);
+
+                // Sincroniza o campo de input na tela se o modal estiver aberto
+                const input = document.getElementById('diasAntecedencia');
+                if (input) input.value = diasAntecedenciaUsuario;
+            }
+        }
+    } catch (erro) {
+        console.warn("Não foi possível carregar as preferências do usuário no banco, usando padrão (3 dias).", erro);
+    }
 }
 
-function salvarConfiguracaoAntecedencia() {
+function obterDiasAntecedencia() {
+    return diasAntecedenciaUsuario;
+}
+
+async function salvarConfiguracaoAntecedencia() {
     const input = document.getElementById('diasAntecedencia');
     if (!input) return;
 
@@ -107,8 +126,25 @@ function salvarConfiguracaoAntecedencia() {
         return;
     }
 
-    localStorage.setItem('jurisync_antecedencia_dias', valor);
-    alert('Preferência de alerta atualizada!');
+    // 1. Atualização otimista na memória local
+    diasAntecedenciaUsuario = valor;
+
+    // 2. Persistência real no Banco de Dados via API Spring Boot
+    try {
+        const resposta = await fetch('/api/usuarios/preferencias', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ diasAntecedencia: valor })
+        });
+
+        if (resposta.ok) {
+            alert('Preferência de alerta atualizada e salva na sua conta!');
+        } else {
+            alert('Erro ao salvar no servidor. A alteração será válida apenas para a sessão atual.');
+        }
+    } catch (erro) {
+        console.warn('Erro ao conectar ao servidor para salvar preferência:', erro);
+    }
 
     const casoIdVal = document.getElementById('casoIdParaPrazo')?.value;
     if (casoIdVal) {
@@ -165,6 +201,8 @@ let prazoEmEdicao = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     inicializarTema();
+
+    carregarPreferenciasDoUsuario();
 
     const inputProcesso = document.getElementById('processo');
     if (inputProcesso) {
