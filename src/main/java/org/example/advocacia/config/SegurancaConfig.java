@@ -22,7 +22,12 @@ public class SegurancaConfig {
                 // CADA PÁGINA NOVA TEM QUE SER ADICIONADA AQUI, SE N O SERVER EXPLODE:
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/login.html", "/cadastro.html", "/recuperar-senha.html", "/cadastrar", "/style.css", "/js/**", "/css/**", "/images/**").permitAll()
+                        .requestMatchers(
+                                "/", "/login", "/login.html", "/cadastro.html",
+                                "/recuperar-senha.html", "/redefinir-senha.html",
+                                "/cadastrar", "/api/recuperar-senha", "/api/redefinir-senha",
+                                "/style.css", "/js/**", "/css/**", "/images/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

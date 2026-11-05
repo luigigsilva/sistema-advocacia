@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redefinir Senha - JURISYNC</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="page-login-split">
+
+<div class="login-wrapper-fullscreen">
+  <!-- LADO ESQUERDO: Painel Dourado Escuro -->
+  <div class="auth-art-panel-gold">
+    <div class="art-overlay-content">
+      <div class="auth-tag">REDEFINIÇÃO DE SENHA</div>
+      <h1 class="art-main-title">Crie uma nova senha para proteger seu acesso.</h1>
+      <p class="art-main-desc">Sua nova senha deve ter no mínimo 6 caracteres. Recomendamos incluir letras, números e caracteres especiais para garantir máxima segurança ao seu ecossistema JURISYNC.</p>
+    </div>
+
+    <div class="art-footer-brand">
+      <span>⚖️ JURISYNC &bull; Gestão Pericial Inteligente</span>
+    </div>
+  </div>
+
+  <!-- LADO DIREITO: Painel Escuro de Formulário -->
+  <div class="auth-form-panel-dark">
+    <div class="card-container-dark">
+      <!-- Nome/Logo no Canto Superior Direito -->
+      <div class="brand-right-corner">
+        <span class="art-corner-icon">⚖️</span>
+        <span class="art-corner-title">JURISYNC</span>
+      </div>
+
+      <h1 class="welcome-title">Nova Senha</h1>
+      <p class="form-subheading">Digite sua nova senha nos campos abaixo para concluir a redefinição de acesso.</p>
+
+      <!-- Mensagem de erro -->
+      <div id="msg-erro" style="display: none; background-color: #3d1418; color: #f87171; border: 1px solid #7f1d1d; padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 20px; text-align: left;"></div>
+
+      <!-- Mensagem de sucesso -->
+      <div id="msg-sucesso" style="display: none; background-color: #143d22; color: #4ade80; border: 1px solid #1d7f40; padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 20px; text-align: left;"></div>
+
+      <form id="form-redefinir">
+        <div class="input-group">
+          <label for="novaSenha">Nova Senha</label>
+          <input type="password" id="novaSenha" required placeholder="Digite sua nova senha">
+
+          <div id="meter-container" style="display: none; margin-top: 8px;">
+            <div style="width: 100%; height: 5px; background-color: #24272b; border-radius: 3px; overflow: hidden; border: 1px solid #363a40;">
+              <div id="meter-fill" style="height: 100%; width: 0%; transition: width 0.3s ease, background-color 0.3s ease; border-radius: 3px;"></div>
+            </div>
+            <span id="meter-text" style="display: block; margin-top: 5px; font-size: 11px; font-weight: 500; text-align: left;"></span>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="confirmarSenha">Confirmar Nova Senha</label>
+          <input type="password" id="confirmarSenha" required placeholder="Repita a nova senha">
+        </div>
+
+        <button type="submit" id="btn-redefinir" class="btn-entrar-gold">Redefinir Senha &rarr;</button>
+      </form>
+
+      <p class="text-cadastro-dark" style="margin-top: 25px;"><a href="login.html">&larr; Voltar para o Login</a></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+
+      const msgErro = document.getElementById('msg-erro');
+      const msgSucesso = document.getElementById('msg-sucesso');
+      const formRedefinir = document.getElementById('form-redefinir');
+      const btnRedefinir = document.getElementById('btn-redefinir');
+      const senhaInput = document.getElementById('novaSenha');
+
+      // Se não houver token na URL, oculta o formulário e exibe o alerta
+      if (!token) {
+          msgErro.textContent = 'Token de redefinição ausente ou inválido. Solicite um novo link no login.';
+          msgErro.style.display = 'block';
+          if (formRedefinir) formRedefinir.style.display = 'none';
+          return;
+      }
+
+      // Indicador dinâmico de força de senha
+      const meterContainer = document.getElementById('meter-container');
+      const meterFill = document.getElementById('meter-fill');
+      const meterText = document.getElementById('meter-text');
+
+      if (senhaInput) {
+          senhaInput.addEventListener('input', function() {
+              const val = senhaInput.value;
+
+              if (val.length === 0) {
+                  if (meterContainer) meterContainer.style.display = 'none';
+                  return;
+              }
+
+              if (meterContainer) meterContainer.style.display = 'block';
+
+              const temLetra = /[a-zA-Z]/.test(val);
+              const temNumero = /[0-9]/.test(val);
+              const temEspecial = /[^a-zA-Z0-9]/.test(val);
+
+              if (!temEspecial || val.length < 6) {
+                  if (meterFill) {
+                      meterFill.style.width = '33%';
+                      meterFill.style.backgroundColor = '#dc3545';
+                  }
+                  if (meterText) {
+                      meterText.textContent = 'Fraca (requer 6+ caracteres e caractere especial)';
+                      meterText.style.color = '#f87171';
+                  }
+              }
+              else if (val.length >= 8 && temEspecial && temLetra && temNumero) {
+                  if (meterFill) {
+                      meterFill.style.width = '100%';
+                      meterFill.style.backgroundColor = '#28a745';
+                  }
+                  if (meterText) {
+                      meterText.textContent = 'Forte';
+                      meterText.style.color = '#4ade80';
+                  }
+              }
+              else {
+                  if (meterFill) {
+                      meterFill.style.width = '66%';
+                      meterFill.style.backgroundColor = '#ffc107';
+                  }
+                  if (meterText) {
+                      meterText.textContent = 'Média';
+                      meterText.style.color = '#facc15';
+                  }
+              }
+          });
+      }
+
+      // Submissão da nova senha
+      if (formRedefinir) {
+          formRedefinir.addEventListener('submit', async function(event) {
+              event.preventDefault();
+
+              msgErro.style.display = 'none';
+              msgSucesso.style.display = 'none';
+
+              const novaSenha = senhaInput.value;
+              const confirmarSenha = document.getElementById('confirmarSenha').value;
+
+              if (novaSenha.length < 6) {
+                  msgErro.textContent = 'A nova senha deve ter no mínimo 6 caracteres.';
+                  msgErro.style.display = 'block';
+                  return;
+              }
+
+              if (novaSenha !== confirmarSenha) {
+                  msgErro.textContent = 'As senhas digitadas não são iguais.';
+                  msgErro.style.display = 'block';
+                  return;
+              }
+
+              btnRedefinir.disabled = true;
+              btnRedefinir.textContent = 'Processando...';
+
+              try {
+                  const resposta = await fetch('/api/redefinir-senha', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                          token: token,
+                          novaSenha: novaSenha
+                      })
+                  });
+
+                  if (resposta.ok) {
+                      msgSucesso.textContent = 'Senha redefinida com sucesso! Redirecionando para o login...';
+                      msgSucesso.style.display = 'block';
+                      btnRedefinir.textContent = 'Concluído ✓';
+
+                      setTimeout(function() {
+                          window.location.href = 'login.html?sucesso=redefinicao';
+                      }, 2500);
+                  } else {
+                      const dados = await resposta.json().catch(() => ({}));
+                      msgErro.textContent = dados.erro || 'Este link expirou ou já foi utilizado. Solicite uma nova recuperação.';
+                      msgErro.style.display = 'block';
+                      btnRedefinir.disabled = false;
+                      btnRedefinir.textContent = 'Redefinir Senha →';
+                  }
+              } catch (erro) {
+                  msgErro.textContent = 'Erro ao conectar ao servidor. Tente novamente em instantes.';
+                  msgErro.style.display = 'block';
+                  btnRedefinir.disabled = false;
+                  btnRedefinir.textContent = 'Redefinir Senha →';
+              }
+          });
+      }
+  });
+</script>
+
+</body>
+</html>

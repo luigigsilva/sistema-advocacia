@@ -46,12 +46,12 @@
             <form id="form-recuperar" action="login.html" method="GET">
                 <div class="input-group">
                     <label for="email-recuperacao">E-mail Cadastrado</label>
-                    <input 
-                        type="email" 
-                        id="email-recuperacao" 
-                        name="email" 
-                        required 
-                        placeholder="seuemail@exemplo.com"
+                    <input
+                            type="email"
+                            id="email-recuperacao"
+                            name="email"
+                            required
+                            placeholder="seuemail@exemplo.com"
                     >
                 </div>
 
@@ -60,7 +60,7 @@
                 <!-- Texto Reenviar posicionado abaixo do botão -->
                 <div style="text-align: center; margin-top: 14px;">
                     <span id="texto-reenviar" style="display: none; font-size: 12px; color: #9aa0a6; font-weight: 500;">
-                        Reenviar em (<span id="contador" style="color: #c3a066;">30</span>s)
+                        Redirecionando para o login...
                     </span>
                 </div>
             </form>
@@ -81,7 +81,6 @@
         var msgSucesso = document.getElementById('msg-sucesso');
         var btnEnviar = document.getElementById('btn-enviar');
         var textoReenviar = document.getElementById('texto-reenviar');
-        var spanContador = document.getElementById('contador');
 
         // Limpa mensagens anteriores
         msgErro.style.display = 'none';
@@ -95,11 +94,14 @@
             return;
         }
 
-        let possuiCadastro = false;
+        btnEnviar.disabled = true;
+        btnEnviar.textContent = 'Enviando...';
 
-        // 2. Consulta ao Banco / API (com fallback local caso esteja offline)
+        let mensagemServidor = '';
+
+        // 2. Consulta ao Banco / API (com envio direto da solicitação de recuperação)
         try {
-            const resposta = await fetch('/api/verificar-email', {
+            const resposta = await fetch('/api/recuperar-senha', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: emailInput })
@@ -107,47 +109,30 @@
 
             if (resposta.ok) {
                 const dados = await resposta.json();
-                possuiCadastro = Boolean(dados.existe);
+                mensagemServidor = dados.mensagem;
             }
         } catch (erro) {
-            var usuariosSalvos = JSON.parse(localStorage.getItem('usuarios')) || [];
-            possuiCadastro = usuariosSalvos.some(function(u) {
-                var email = typeof u === 'string' ? u : (u && u.email);
-                return email && email.toLowerCase() === emailInput;
-            });
+            console.log('Solicitação processada localmente.');
         }
 
-        // 3. Se a conta não existir
-        if (!possuiCadastro) {
-            msgErro.innerHTML = 'Esta conta não foi encontrada no sistema.';
-            msgErro.style.display = 'block';
-            return;
-        }
+        // 3. Se a conta não existir (RN042: Não revela se o e-mail possui ou não conta cadastrada)
+        // Mantém a opacidade de segurança para evitar enumeração de contas por terceiros.
 
         // 4. Se a conta existir: Envia a requisição e exibe confirmação
-        try {
-            await fetch('/api/recuperar-senha', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: emailInput })
-            });
-        } catch (e) {
-            console.log('Solicitação enviada localmente.');
-        }
-
-        msgSucesso.innerHTML = 'Link enviado com sucesso! Redirecionando para o login...';
+        msgSucesso.innerHTML = mensagemServidor || 'Se o e-mail informado estiver cadastrado, você receberá o link de redefinição em breve.';
         msgSucesso.style.display = 'block';
 
         btnEnviar.textContent = 'Link Enviado ✓';
-        btnEnviar.disabled = true;
         btnEnviar.style.backgroundColor = '#2b2f34';
         btnEnviar.style.color = '#8e949e';
         btnEnviar.style.cursor = 'not-allowed';
 
+        if (textoReenviar) textoReenviar.style.display = 'block';
+
         // 5. Redireciona para login.html após 3 segundos
         setTimeout(function() {
             window.location.href = 'login.html';
-        }, 3000);
+        }, 3500);
     });
 </script>
 

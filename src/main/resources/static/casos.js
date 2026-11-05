@@ -804,7 +804,7 @@ function consultarPrazo(prazoId) {
     const btnSalvar = document.getElementById('btn-salvar-prazo');
     if (btnSalvar) btnSalvar.style.display = "none";
 
-    mostrarErroPrazo(`<strong>Modo Consulta (RN013):</strong> Prazo indisponível para alterações.`, "#d1ecf1", "#0c5460", "#bee5eb");
+    mostrarErroPrazo(`Prazo indisponível para alterações.`, "#d1ecf1", "#0c5460", "#bee5eb");
 }
 
 function carregarPrazoParaEdicao(prazoId) {
@@ -867,7 +867,7 @@ async function salvarPrazo(e) {
 
     let casoEncontrado = casos.find(c => String(c.id) === String(casoIdVal));
     if (!casoEncontrado) {
-        mostrarErroPrazo("<strong>RN009:</strong> O prazo deve estar vinculado a um caso pericial existente.");
+        mostrarErroPrazo("O prazo deve estar vinculado a um caso pericial existente.");
         return;
     }
 
@@ -877,72 +877,60 @@ async function salvarPrazo(e) {
     }
 
     if (!descVal) {
-        mostrarErroPrazo("<strong>RN010:</strong> A descrição do prazo é obrigatória.");
+        mostrarErroPrazo("A descrição do prazo é obrigatória.");
         return;
     }
 
     if (!dataVencimentoVal) {
-        mostrarErroPrazo("<strong>RN011:</strong> A data de vencimento é obrigatória.");
+        mostrarErroPrazo("A data de vencimento é obrigatória.");
         return;
     }
 
-    const hojeStr = formatarDataLocal(new Date());
-
-    const dataCadastroRef = (prazoEmEdicao && prazoEmEdicao.dataCadastro)
-        ? prazoEmEdicao.dataCadastro.split('T')[0]
-        : hojeStr;
-
-    if (dataVencimentoVal < dataCadastroRef) {
-        mostrarErroPrazo(`<strong>RN011:</strong> A data de vencimento (${dataVencimentoVal}) não pode ser anterior ao cadastro (${dataCadastroRef}).`);
-        return;
-    }
-
-    let historicoAtualizado = prazoEmEdicao && prazoEmEdicao.historico ? [...prazoEmEdicao.historico] : [];
-    const dataVencAnterior = prazoEmEdicao && prazoEmEdicao.dataVencimento ? prazoEmEdicao.dataVencimento.split('T')[0] : null;
-
-    if (prazoEmEdicao && dataVencAnterior && dataVencAnterior !== dataVencimentoVal) {
-        historicoAtualizado.push({
-            dataAnterior: dataVencAnterior,
-            novaData: dataVencimentoVal,
-            dataAlteracao: new Date().toISOString()
-        });
-    }
-
-    const novoPrazo = {
-        id: prazoIdVal ? converterIdSeguro(prazoIdVal) : Date.now(),
-        casoId: converterIdSeguro(casoIdVal),
+    // Payload limpo e compatível com a entidade Prazo.java do Spring Boot
+    const payloadBackend = {
         descricao: descVal,
         dataVencimento: dataVencimentoVal,
-        dataCadastro: dataCadastroRef,
-        tipoContagem: tipoContagemVal,
+        tipoContagem: (tipoContagemVal || 'DIAS_CORRIDOS').toUpperCase(),
         dias: diasVal ? parseInt(diasVal, 10) : null,
-        status: prazoEmEdicao ? prazoEmEdicao.status : 'EM_DIA',
-        historico: historicoAtualizado
+        status: (prazoEmEdicao && prazoEmEdicao.status === 'CUMPRIDO') ? 'CUMPRIDO' : 'PENDENTE'
     };
 
     if (prazoIdVal) {
-        const idxP = casoEncontrado.prazos.findIndex(p => String(p.id) === String(prazoIdVal));
-        if (idxP >= 0) casoEncontrado.prazos[idxP] = novoPrazo;
-    } else {
-        if (!casoEncontrado.prazos) casoEncontrado.prazos = [];
-        casoEncontrado.prazos.push(novoPrazo);
+        payloadBackend.id = converterIdSeguro(prazoIdVal);
     }
-
-    prazos = casoEncontrado.prazos;
-    renderTabelaPrazos();
-    limparFormularioPrazo();
 
     try {
         const urlDestino = prazoIdVal ? `/api/prazos/${prazoIdVal}` : `/api/casos/${casoIdVal}/prazos`;
         const metodoHttp = prazoIdVal ? 'PUT' : 'POST';
 
-        await fetch(urlDestino, {
+        const resposta = await fetch(urlDestino, {
             method: metodoHttp,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(novoPrazo)
+            body: JSON.stringify(payloadBackend)
         });
+
+        if (resposta.ok) {
+            const prazoSalvoServidor = await resposta.json();
+
+            if (!casoEncontrado.prazos) casoEncontrado.prazos = [];
+
+            if (prazoIdVal) {
+                const idxP = casoEncontrado.prazos.findIndex(p => String(p.id) === String(prazoIdVal));
+                if (idxP >= 0) casoEncontrado.prazos[idxP] = prazoSalvoServidor;
+            } else {
+                casoEncontrado.prazos.push(prazoSalvoServidor);
+            }
+
+            prazos = casoEncontrado.prazos;
+            renderTabelaPrazos();
+            limparFormularioPrazo();
+        } else {
+            const erroMsg = await resposta.text();
+            mostrarErroPrazo(`<strong>Erro do Servidor (${resposta.status}):</strong> ${erroMsg || 'Falha ao salvar prazo.'}`);
+        }
     } catch (err) {
-        console.warn("Backend de prazos indisponível, gravado localmente.");
+        console.warn("Backend de prazos indisponível.", err);
+        mostrarErroPrazo("Servidor indisponível ou fora do ar.");
     }
 }
 
